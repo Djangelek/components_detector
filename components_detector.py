@@ -6,25 +6,16 @@ from skimage.filters import threshold_otsu
 import skimage
 import matplotlib.pyplot as plt
 
-#código para cambiar el tamaño de la imagen
-def ResizeWithAspectRatio(image, width=None, height=None, inter=cv2.INTER_AREA):
-    dim = None
-    (h, w) = image.shape[:2]
-
-    if width is None and height is None:
-        return image
-    if width is None:
-        r = height / float(h)
-        dim = (int(w * r), height)
-    else:
-        r = width / float(w)
-        dim = (width, int(h * r))
-
-    return cv2.resize(image, dim, interpolation=inter)
-
 #obtenemos la imagen original y la pasamos a grises
 img_org = cv2.imread("images\org.jpg")
-img_re = ResizeWithAspectRatio(img_org, width=480)
+
+#código para cambiar el tamaño de la imagen
+scale_percent = 25 # percent of original size
+width = int(img_org.shape[1] * scale_percent / 100)
+height = int(img_org.shape[0] * scale_percent / 100)
+dim = (width, height)
+
+img_re = cv2.resize(img_org, dim, interpolation = cv2.INTER_AREA)
 img_gray = cv2.cvtColor(img_re, cv2.COLOR_BGR2GRAY)
 
 #hacemos un blurr
@@ -38,7 +29,7 @@ conn = 4
 output = cv2.connectedComponentsWithStats(threshImg, conn, cv2.CV_32S)
 (numLabels, labels, stats, centroids) = output
 
-for i in range(0, numLabels):
+for i in range(2, numLabels):
   x = stats[i, cv2.CC_STAT_LEFT]
   y = stats[i, cv2.CC_STAT_TOP]
   w = stats[i, cv2.CC_STAT_WIDTH]
@@ -54,3 +45,6 @@ for i in range(0, numLabels):
   cv2.imshow(" ",output)
   cv2.waitKey(0)  
   cv2.destroyAllWindows()
+
+print(centroids)
+
