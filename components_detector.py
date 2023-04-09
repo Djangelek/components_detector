@@ -39,23 +39,6 @@ output = cv2.connectedComponentsWithStats(threshImg, conn, cv2.CV_32S)
 (numLabels, labels, stats, centroids) = output
 
 for i in range(0, numLabels):
-	if i == 0:
-		text = "examining component {}/{} (background)".format(
-			i + 1, numLabels)
-	else:
-		text = "examining component {}/{}".format( i + 1, numLabels)
-	print("[INFO] {}".format(text))
-	x = stats[i, cv2.CC_STAT_LEFT]
-	y = stats[i, cv2.CC_STAT_TOP]
-	w = stats[i, cv2.CC_STAT_WIDTH]
-	h = stats[i, cv2.CC_STAT_HEIGHT]
-	area = stats[i, cv2.CC_STAT_AREA]
-	(cX, cY) = centroids[i]
-
-for i in range(0, numLabels):
-
-  # extract the connected component statistics and centroid for
-  # the current label
   x = stats[i, cv2.CC_STAT_LEFT]
   y = stats[i, cv2.CC_STAT_TOP]
   w = stats[i, cv2.CC_STAT_WIDTH]
