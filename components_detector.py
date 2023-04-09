@@ -46,5 +46,5 @@ for i in range(2, numLabels):
   cv2.waitKey(0)  
   cv2.destroyAllWindows()
 
-print(centroids)
+
 
