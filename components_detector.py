@@ -6,6 +6,7 @@ from skimage.filters import threshold_otsu
 import skimage
 import matplotlib.pyplot as plt
 
+
 #código para cambiar el tamaño de la imagen
 def ResizeWithAspectRatio(image, width=None, height=None, inter=cv2.INTER_AREA):
     dim = None
@@ -23,7 +24,7 @@ def ResizeWithAspectRatio(image, width=None, height=None, inter=cv2.INTER_AREA):
     return cv2.resize(image, dim, interpolation=inter)
 
 #obtenemos la imagen original y la pasamos a grises
-img_org = cv2.imread("images\org.jpg")
+img_org = cv2.imread("images\org2.jpg")
 img_re = ResizeWithAspectRatio(img_org, width=480)
 img_gray = cv2.cvtColor(img_re, cv2.COLOR_BGR2GRAY)
 
@@ -73,7 +74,9 @@ for i in range(0, numLabels):
   cv2.imshow(" ",output)
   cv2.waitKey(0)
   # Imprimir las medidas y área del objeto
-  print("Label No {}: Longitud: {}, Altura: {}, Área: {}".format(i, max(w, h), min(w, h), area))
+  print("Label No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))
+  if(i==0):
+      Punto_centro = (int(cX), int(cY))
 
 centroides = []
 for i in range(1, numLabels):
@@ -110,34 +113,55 @@ for centroid in centroides:
     cX, cY = centroid
     print("Coordenadas: cX = {}, cY = {}".format(cX, cY))
     
-centroidesCoincidentes = []
-umbral_x = 10  # Umbral para la cercanía en el eje de las x
-# Comparar las coordenadas en el eje de las x
+# Encontrar el punto que está más cerca de los otros dos en términos de distancia en ambos ejes
+punto_cercano = None
+distancia_minima = float('inf')
 for i in range(len(centroides)):
-    for j in range(i+1, len(centroides)):
-        cX1, cY1 = centroides[i]
-        cX2, cY2 = centroides[j]
-        if abs(cX1 - cX2) < umbral_x:
-            print("Las coordenadas ({}, {}) y ({}, {}) están cerca en el eje de las x".format(cX1, cY1, cX2, cY2))
-            #Guardar en centroides coincidentes 
-            centroidesCoincidentes.append((int(cX1), int(cY1)))
-            centroidesCoincidentes.append((int(cX2), int(cY2)))
-            
-umbral_y = 10  # Umbral para la cercanía en el eje de las x
-# Comparar las coordenadas en el eje de las y
-for i in range(len(centroides)):
-    for j in range(i+1, len(centroides)):
-        cX1, cY1 = centroides[i]
-        cX2, cY2 = centroides[j]
-        if abs(cY1 - cY2) < umbral_y:
-            print("Las coordenadas ({}, {}) y ({}, {}) están cerca en el eje de las y".format(cX1, cY1, cX2, cY2))
-            centroidesCoincidentes.append((int(cX1), int(cY1)))
-            centroidesCoincidentes.append((int(cX2), int(cY2)))
+    for j in range(i + 1, len(centroides)):
+        for k in range(j + 1, len(centroides)):
+            cX1, cY1 = centroides[i]
+            cX2, cY2 = centroides[j]
+            cX3, cY3 = centroides[k]
+            distancia_total = mt.sqrt((cX1 - cX2) ** 2 + (cY1 - cY2) ** 2) + mt.sqrt((cX1 - cX3) ** 2 + (cY1 - cY3) ** 2) + mt.sqrt((cX2 - cX3) ** 2 + (cY2 - cY3) ** 2)
+            if distancia_total < distancia_minima:
+                distancia_minima = distancia_total
+                punto_cercano = centroides[i] if distancia_total == mt.sqrt((cX1 - cX2) ** 2) else centroides[j]
+print("El punto más cercano a los otros dos en términos de distancia en ambos ejes es: {}".format(punto_cercano))
+Punto_esperado= (118,590)
 
-#Encontrar coordenada repetida en centroidesCoincidentes
-for i in range(len(centroidesCoincidentes)):
-    for j in range(i + 1, len(centroidesCoincidentes)):
-        if centroidesCoincidentes[i] == centroidesCoincidentes[j]:
-            print(centroidesCoincidentes[i])
+# Coordenadas del punto de referencia (esquina izquierda superior)
+x1, y1 = Punto_centro
+# Coordenadas del primer punto (360, 125)
+x2, y2 = punto_cercano
+# Coordenadas del segundo punto (118, 590)
+x3,y3 = Punto_esperado
 
+# Paso 1: Calcular las diferencias en las coordenadas x y y para el primer punto
+delta_x1 = x2 - x1
+delta_y1 = y2 - y1
+
+# Paso 2: Calcular las diferencias en las coordenadas x y y para el segundo punto
+delta_x2 = x3 - x1
+delta_y2 = y3 - y1
+
+# Paso 3: Calcular el ángulo de rotación para ambos puntos en radianes
+theta_rad1 = mt.atan2(delta_y1, delta_x1)
+theta_rad2 = mt.atan2(delta_y2, delta_x2)
+
+# Paso 4: Calcular la diferencia de ángulos entre los dos puntos
+delta_theta_rad = theta_rad2 - theta_rad1
+
+# Paso 5: Convertir la diferencia de ángulos a grados
+delta_theta_deg = mt.degrees(delta_theta_rad)
+
+#imprimir el ángulo de rotación
+print("El ángulo de rotación es: {}".format(delta_theta_deg))
+
+# Obtener la matriz de transformación de rotación
+rotation_matrix = cv2.getRotationMatrix2D(Punto_centro, delta_theta_deg, 1.0)
+
+# Aplicar la matriz de transformación a la imagen
+rotated_image = cv2.warpAffine(img_re.copy(), rotation_matrix, (img_re.copy().shape[1], img_re.copy().shape[0]))
+cv2.imshow('Imagen rotada', rotated_image)
+cv2.waitKey(0)
 cv2.destroyAllWindows()
