@@ -24,7 +24,7 @@ def ResizeWithAspectRatio(image, width=None, height=None, inter=cv2.INTER_AREA):
     return cv2.resize(image, dim, interpolation=inter)
 
 #obtenemos la imagen original y la pasamos a grises
-img_org = cv2.imread("images\org2.jpg")
+img_org = cv2.imread("images\orgp4.jpg")
 img_re = ResizeWithAspectRatio(img_org, width=480)
 img_gray = cv2.cvtColor(img_re, cv2.COLOR_BGR2GRAY)
 
@@ -75,7 +75,7 @@ for i in range(0, numLabels):
   cv2.waitKey(0)
   # Imprimir las medidas y área del objeto
   print("Label No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))
-  if(i==0):
+  if(i==1):
       Punto_centro = (int(cX), int(cY))
 
 centroides = []
@@ -90,9 +90,9 @@ for i in range(1, numLabels):
     (cX, cY) = centroids[i]
     # ensure the width, height, and area are all neither too small
     # nor too big
-    keepWidth = w > 80 and w < 100
-    keepHeight = h > 80 and h < 100
-    keepArea = area > 5000 and area < 7000
+    keepWidth = w > 45 and w < 60
+    keepHeight = h > 45 and h < 60
+    keepArea = area > 1500 and area < 2000
     # ensure the connected component we are examining passes all
     # three tests
     if all((keepWidth, keepHeight, keepArea)):
@@ -113,21 +113,21 @@ for centroid in centroides:
     cX, cY = centroid
     print("Coordenadas: cX = {}, cY = {}".format(cX, cY))
     
-# Encontrar el punto que está más cerca de los otros dos en términos de distancia en ambos ejes
 punto_cercano = None
 distancia_minima = float('inf')
 for i in range(len(centroides)):
-    for j in range(i + 1, len(centroides)):
-        for k in range(j + 1, len(centroides)):
-            cX1, cY1 = centroides[i]
+    cX1, cY1 = centroides[i]
+    distancia_total = 0
+    for j in range(len(centroides)):
+        if i != j:
             cX2, cY2 = centroides[j]
-            cX3, cY3 = centroides[k]
-            distancia_total = mt.sqrt((cX1 - cX2) ** 2 + (cY1 - cY2) ** 2) + mt.sqrt((cX1 - cX3) ** 2 + (cY1 - cY3) ** 2) + mt.sqrt((cX2 - cX3) ** 2 + (cY2 - cY3) ** 2)
-            if distancia_total < distancia_minima:
-                distancia_minima = distancia_total
-                punto_cercano = centroides[i] if distancia_total == mt.sqrt((cX1 - cX2) ** 2) else centroides[j]
+            distancia_total += mt.sqrt((cX1 - cX2) ** 2 + (cY1 - cY2) ** 2)
+    if distancia_total < distancia_minima:
+        distancia_minima = distancia_total
+        punto_cercano = centroides[i]
 print("El punto más cercano a los otros dos en términos de distancia en ambos ejes es: {}".format(punto_cercano))
-Punto_esperado= (118,590)
+
+Punto_esperado= (170,543)
 
 # Coordenadas del punto de referencia (esquina izquierda superior)
 x1, y1 = Punto_centro
@@ -158,7 +158,7 @@ delta_theta_deg = mt.degrees(delta_theta_rad)
 print("El ángulo de rotación es: {}".format(delta_theta_deg))
 
 # Obtener la matriz de transformación de rotación
-rotation_matrix = cv2.getRotationMatrix2D(Punto_centro, delta_theta_deg, 1.0)
+rotation_matrix = cv2.getRotationMatrix2D(Punto_centro, -delta_theta_deg, 1.0)
 
 # Aplicar la matriz de transformación a la imagen
 rotated_image = cv2.warpAffine(img_re.copy(), rotation_matrix, (img_re.copy().shape[1], img_re.copy().shape[0]))
