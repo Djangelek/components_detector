@@ -5,6 +5,8 @@ from skimage import io
 from skimage.filters import threshold_otsu
 import skimage
 import matplotlib.pyplot as plt
+from skimage.feature import match_template
+from skimage.feature import peak_local_max
 
 #obtenemos la imagen original y la pasamos a grises
 img_org = cv2.imread("images\org.jpg")
