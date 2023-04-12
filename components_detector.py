@@ -228,9 +228,38 @@ dilated_mask = cv2.dilate(mask, kernel, iterations=1)
 # Mostrar la imagen original y la imagen segmentada
 cv2.imshow('Imagen Segmentada ROJO', dilated_mask)
 cv2.waitKey(0)
-contours, _ = cv2.findContours(dilated_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+cv2.destroyAllWindows()
+
+# Hacemos un threshold
+(T, threshImg) = cv2.threshold(dilated_mask, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+# Aplicamos componentes conectados
+conn = 4
+output = cv2.connectedComponentsWithStats(dilated_mask, conn, cv2.CV_32S)
+(numLabels, labels, stats, centroids) = output
+
+for i in range(0, numLabels):
+	x = stats[i, cv2.CC_STAT_LEFT]
+	y = stats[i, cv2.CC_STAT_TOP]
+	w = stats[i, cv2.CC_STAT_WIDTH]
+	h = stats[i, cv2.CC_STAT_HEIGHT]
+	area = stats[i, cv2.CC_STAT_AREA]
+	(cX, cY) = centroids[i]
+ 
+for i in range(0, numLabels):
+  # extract the connected component statistics and centroid for
+  # the current label
+  x = stats[i, cv2.CC_STAT_LEFT]
+  y = stats[i, cv2.CC_STAT_TOP]
+  w = stats[i, cv2.CC_STAT_WIDTH]
+  h = stats[i, cv2.CC_STAT_HEIGHT]
+  area = stats[i, cv2.CC_STAT_AREA]
+  (cX, cY) = centroids[i]
+  # Imprimir las medidas y área del objeto
+  if(i>0):
+    print("Punto Rojo No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))
+  
 # Contar la cantidad de contornos encontrados (que representan los puntos rojos)
-cantidad_puntos = len(contours)
+cantidad_puntos = numLabels-1
 # Mostrar la cantidad de puntos detectados
 print("Cantidad de puntos rojos detectados:", cantidad_puntos)
 
@@ -250,9 +279,36 @@ dilated_mask = cv2.dilate(mask, kernel, iterations=1)
 
 cv2.imshow('Imagen Segmentada Azul', dilated_mask)
 cv2.waitKey(0)
-contours, _ = cv2.findContours(dilated_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-# Contar la cantidad de contornos encontrados (que representan los puntos azules)
-cantidad_puntos = len(contours)
+cv2.destroyAllWindows()
+# Hacemos un threshold
+(T, threshImg) = cv2.threshold(dilated_mask, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+# Aplicamos componentes conectados
+conn = 4
+output = cv2.connectedComponentsWithStats(dilated_mask, conn, cv2.CV_32S)
+(numLabels, labels, stats, centroids) = output
+
+for i in range(0, numLabels):
+	x = stats[i, cv2.CC_STAT_LEFT]
+	y = stats[i, cv2.CC_STAT_TOP]
+	w = stats[i, cv2.CC_STAT_WIDTH]
+	h = stats[i, cv2.CC_STAT_HEIGHT]
+	area = stats[i, cv2.CC_STAT_AREA]
+	(cX, cY) = centroids[i]
+ 
+for i in range(0, numLabels):
+  # extract the connected component statistics and centroid for
+  # the current label
+  x = stats[i, cv2.CC_STAT_LEFT]
+  y = stats[i, cv2.CC_STAT_TOP]
+  w = stats[i, cv2.CC_STAT_WIDTH]
+  h = stats[i, cv2.CC_STAT_HEIGHT]
+  area = stats[i, cv2.CC_STAT_AREA]
+  (cX, cY) = centroids[i]
+  # Imprimir las medidas y área del objeto
+  if(i>0):
+    print("Punto Azul No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))
+
+cantidad_puntos = numLabels-1
 # Mostrar la cantidad de puntos detectados
 print("Cantidad de puntos Azules detectados:", cantidad_puntos)
 
@@ -268,15 +324,44 @@ mask = cv2.inRange(hsv_image, lower_green, upper_green)
 # Aplicar filtro de dilatación a la máscara
 kernel = np.ones((5, 5), np.uint8)
 dilated_mask = cv2.dilate(mask, kernel, iterations=1)
+
 # Mostrar la imagen original y la imagen segmentada
 cv2.imshow('Imagen Segmentada VERDE', dilated_mask)
 cv2.waitKey(0)
-contours, _ = cv2.findContours(dilated_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-# Contar la cantidad de contornos encontrados (que representan los puntos verdes)
-cantidad_puntos = len(contours)
+cv2.destroyAllWindows()
+# Hacemos un threshold
+(T, threshImg) = cv2.threshold(dilated_mask, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+# Aplicamos componentes conectados
+conn = 4
+output = cv2.connectedComponentsWithStats(dilated_mask, conn, cv2.CV_32S)
+(numLabels, labels, stats, centroids) = output
+
+for i in range(0, numLabels): 
+	x = stats[i, cv2.CC_STAT_LEFT]
+	y = stats[i, cv2.CC_STAT_TOP]
+	w = stats[i, cv2.CC_STAT_WIDTH]
+	h = stats[i, cv2.CC_STAT_HEIGHT]
+	area = stats[i, cv2.CC_STAT_AREA]
+	(cX, cY) = centroids[i]
+ 
+for i in range(0, numLabels):
+  # extract the connected component statistics and centroid for
+  # the current label
+  x = stats[i, cv2.CC_STAT_LEFT]
+  y = stats[i, cv2.CC_STAT_TOP]
+  w = stats[i, cv2.CC_STAT_WIDTH]
+  h = stats[i, cv2.CC_STAT_HEIGHT]
+  area = stats[i, cv2.CC_STAT_AREA]
+  (cX, cY) = centroids[i]
+  # Imprimir las medidas y área del objeto
+  if(i>0):
+      print("Punto Verde No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))
+  
+  
+cantidad_puntos = numLabels-1
 # Mostrar la cantidad de puntos detectados
 print("Cantidad de puntos verdes detectados:", cantidad_puntos)
-
+ 
 # Esperar a que se presione una tecla y cerrar las ventanas
 cv2.waitKey(0)
 cv2.destroyAllWindows()
