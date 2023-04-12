@@ -6,7 +6,6 @@ from skimage.filters import threshold_otsu
 import skimage
 import matplotlib.pyplot as plt
 
-
 #código para cambiar el tamaño de la imagen
 def ResizeWithAspectRatio(image, width=None, height=None, inter=cv2.INTER_AREA):
     dim = None
@@ -24,7 +23,7 @@ def ResizeWithAspectRatio(image, width=None, height=None, inter=cv2.INTER_AREA):
     return cv2.resize(image, dim, interpolation=inter)
 
 #obtenemos la imagen original y la pasamos a grises
-img_org = cv2.imread("images\orgp5.jpg")
+img_org = cv2.imread("images\orgp6.jpg")
 img_re = ResizeWithAspectRatio(img_org, width=480)
 img_gray = cv2.cvtColor(img_re, cv2.COLOR_BGR2GRAY)
 
@@ -172,7 +171,6 @@ for i in range(1, numLabels):
         cv2.waitKey(0)
         
 #imprimir los centroides guardados en el diccionario
-
 for centroid in centroides:
     cX, cY = centroid
     print("Coordenadas: cX = {}, cY = {}".format(cX, cY))
