@@ -23,7 +23,7 @@ def ResizeWithAspectRatio(image, width=None, height=None, inter=cv2.INTER_AREA):
     return cv2.resize(image, dim, interpolation=inter)
 
 #obtenemos la imagen original y la pasamos a grises
-img_org = cv2.imread("images\orgp5.jpg")
+img_org = cv2.imread("images\orgp7.jpg")
 img_re = ResizeWithAspectRatio(img_org, width=480)
 img_gray = cv2.cvtColor(img_re, cv2.COLOR_BGR2GRAY)
 
@@ -63,15 +63,8 @@ for i in range(0, numLabels):
   area = stats[i, cv2.CC_STAT_AREA]
   (cX, cY) = centroids[i]
 
-  output = img_re.copy()
-  cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 0), 3)
-  cv2.circle(output, (int(cX), int(cY)), 4, (0, 0, 255), -1)
-
   print("Label No {}".format(i))
-  cv2.line(output, (0, int(cY)), (img_re.shape[1], int(cY)), (255, 0, 0), 2)
-  cv2.line(output, (int(cX), 0), (int(cX), img_re.shape[0]), (255, 0, 0), 2)
-  cv2.imshow(" ",output)
-  cv2.waitKey(0)
+
   # Imprimir las medidas y área del objeto
   print("Label No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))
   if(i==0):
@@ -129,15 +122,6 @@ for i in range(0, numLabels):
   area = stats[i, cv2.CC_STAT_AREA]
   (cX, cY) = centroids[i]
 
-  output = image_translated.copy()
-  cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 0), 3)
-  cv2.circle(output, (int(cX), int(cY)), 4, (0, 0, 255), -1)
-
-  print("Label No {}".format(i))
-  cv2.line(output, (0, int(cY)), (output.shape[1], int(cY)), (255, 0, 0), 2)
-  cv2.line(output, (int(cX), 0), (int(cX), output.shape[0]), (255, 0, 0), 2)
-  cv2.imshow(" ",output)
-  cv2.waitKey(0)
   # Imprimir las medidas y área del objeto
   print("Label No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))
 
@@ -225,5 +209,74 @@ rotation_matrix = cv2.getRotationMatrix2D(Punto_centro_imagen, -delta_theta_deg,
 # Aplicar la matriz de transformación a la imagen
 rotated_image = cv2.warpAffine(image_translated.copy(), rotation_matrix, (image_translated.copy().shape[1], image_translated.copy().shape[0]))
 cv2.imshow('Imagen rotada', rotated_image)
+
+# Convertir la imagen a espacio de color HSV
+hsv_image = cv2.cvtColor(rotated_image, cv2.COLOR_BGR2HSV)
+
+# Definir el rango de colores a detectar (en este caso, color rojo)
+lower_red = np.array([0, 40, 40])  # Valor mínimo de H, S y V para rojo
+upper_red = np.array([10, 255, 255])  # Valor máximo de H, S y V para rojo
+# Crear una máscara que filtre los píxeles dentro del rango de colores definido
+mask = cv2.inRange(hsv_image, lower_red, upper_red)
+# Aplicar la máscara a la imagen original para obtener la imagen segmentada
+segmented_image = cv2.bitwise_and(rotated_image, rotated_image, mask=mask)
+# Crear una máscara que filtre los píxeles dentro del rango de colores definido
+mask = cv2.inRange(hsv_image, lower_red, upper_red)
+# Aplicar filtro de dilatación a la máscara
+kernel = np.ones((5, 5), np.uint8)
+dilated_mask = cv2.dilate(mask, kernel, iterations=1)
+# Mostrar la imagen original y la imagen segmentada
+cv2.imshow('Imagen Segmentada ROJO', dilated_mask)
+cv2.waitKey(0)
+contours, _ = cv2.findContours(dilated_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+# Contar la cantidad de contornos encontrados (que representan los puntos rojos)
+cantidad_puntos = len(contours)
+# Mostrar la cantidad de puntos detectados
+print("Cantidad de puntos rojos detectados:", cantidad_puntos)
+
+# Definir el rango de colores a detectar (en este caso, color Azul)
+lower_blue = np.array([90, 60, 60])  # Valor mínimo de H, S y V para azul
+upper_blue= np.array([130, 255, 255])  # Valor máximo de H, S y V para azul
+# Crear una máscara que filtre los píxeles dentro del rango de colores definido
+mask = cv2.inRange(hsv_image, lower_blue, upper_blue)
+# Aplicar la máscara a la imagen original para obtener la imagen segmentada
+segmented_image = cv2.bitwise_and(rotated_image, rotated_image, mask=mask)
+# Crear una máscara que filtre los píxeles dentro del rango de colores definido
+mask = cv2.inRange(hsv_image, lower_blue, upper_blue)
+# Aplicar filtro de dilatación a la máscara
+kernel = np.ones((5, 5), np.uint8)
+dilated_mask = cv2.dilate(mask, kernel, iterations=1)
+# Mostrar la imagen original y la imagen segmentada
+
+cv2.imshow('Imagen Segmentada Azul', dilated_mask)
+cv2.waitKey(0)
+contours, _ = cv2.findContours(dilated_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+# Contar la cantidad de contornos encontrados (que representan los puntos azules)
+cantidad_puntos = len(contours)
+# Mostrar la cantidad de puntos detectados
+print("Cantidad de puntos Azules detectados:", cantidad_puntos)
+
+# Definir el rango de colores a detectar (en este caso, color verde)
+lower_green = np.array([40, 40, 40])  # Valor mínimo de H, S y V para verde
+upper_green = np.array([70, 255, 255])  # Valor máximo de H, S y V para verde
+# Crear una máscara que filtre los píxeles dentro del rango de colores definido
+mask = cv2.inRange(hsv_image, lower_green, upper_green)
+# Aplicar la máscara a la imagen original para obtener la imagen segmentada
+segmented_image = cv2.bitwise_and(rotated_image, rotated_image, mask=mask)
+# Crear una máscara que filtre los píxeles dentro del rango de colores definido
+mask = cv2.inRange(hsv_image, lower_green, upper_green)
+# Aplicar filtro de dilatación a la máscara
+kernel = np.ones((5, 5), np.uint8)
+dilated_mask = cv2.dilate(mask, kernel, iterations=1)
+# Mostrar la imagen original y la imagen segmentada
+cv2.imshow('Imagen Segmentada VERDE', dilated_mask)
+cv2.waitKey(0)
+contours, _ = cv2.findContours(dilated_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+# Contar la cantidad de contornos encontrados (que representan los puntos verdes)
+cantidad_puntos = len(contours)
+# Mostrar la cantidad de puntos detectados
+print("Cantidad de puntos verdes detectados:", cantidad_puntos)
+
+# Esperar a que se presione una tecla y cerrar las ventanas
 cv2.waitKey(0)
 cv2.destroyAllWindows()
