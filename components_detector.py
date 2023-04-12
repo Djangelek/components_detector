@@ -24,7 +24,7 @@ def ResizeWithAspectRatio(image, width=None, height=None, inter=cv2.INTER_AREA):
     return cv2.resize(image, dim, interpolation=inter)
 
 #obtenemos la imagen original y la pasamos a grises
-img_org = cv2.imread("images\orgp4.jpg")
+img_org = cv2.imread("images\orgp2.jpg")
 img_re = ResizeWithAspectRatio(img_org, width=480)
 img_gray = cv2.cvtColor(img_re, cv2.COLOR_BGR2GRAY)
 
