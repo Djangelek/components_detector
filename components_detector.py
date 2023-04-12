@@ -209,6 +209,7 @@ rotation_matrix = cv2.getRotationMatrix2D(Punto_centro_imagen, -delta_theta_deg,
 # Aplicar la matriz de transformación a la imagen
 rotated_image = cv2.warpAffine(image_translated.copy(), rotation_matrix, (image_translated.copy().shape[1], image_translated.copy().shape[0]))
 cv2.imshow('Imagen rotada', rotated_image)
+cv2.waitKey(0)
 
 # Convertir la imagen a espacio de color HSV
 hsv_image = cv2.cvtColor(rotated_image, cv2.COLOR_BGR2HSV)
