@@ -358,7 +358,6 @@ for i in range(0, numLabels):
   if(i>0):
       print("Punto Verde No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))
   
-  
 cantidad_puntos = numLabels-1
 # Mostrar la cantidad de puntos detectados
 print("Cantidad de puntos verdes detectados:", cantidad_puntos)
