@@ -50,7 +50,6 @@ for i in range(0, numLabels):
 	(cX, cY) = centroids[i]
 
 for i in range(0, numLabels):
-
   # extract the connected component statistics and centroid for
   # the current label
   x = stats[i, cv2.CC_STAT_LEFT]
@@ -61,15 +60,17 @@ for i in range(0, numLabels):
   (cX, cY) = centroids[i]
 
   print("Label No {}".format(i))
-
-  # Imprimir las medidas y área del objeto
+  # Imprimir las medidas, área, centroide del objeto
   print("Label No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))
+  
+  #Detectamos el punto centro de la pieza
   if(i==1):
       Punto_centro = (int(cX), int(cY))
-      
+
+#Punto centro de la imagen
 Punto_centro_imagen = img_re.shape[1] // 2, img_re.shape[0] // 2
  
-# Calcular los centroides de los dos puntos
+# Coordenada de los centroides de los dos puntos
 x0, y0 = Punto_centro_imagen
 x1, y1 = Punto_centro
 
@@ -83,11 +84,12 @@ translation_matrix = np.float32([[1, 0, tx], [0, 1, ty]])
 # Aplicar la traslación a la imagen
 image_translated = cv2.warpAffine(img_re, translation_matrix, (img_re.shape[1], img_re.shape[0]))
 
+#obtenemos la imagen Trasladada y la pasamos a grises
 img_gray = cv2.cvtColor(image_translated, cv2.COLOR_BGR2GRAY)
-#hacemos un blurr
-img_brd = cv2.GaussianBlur(img_gray, (5, 5), 0)
+
 #hacemos un threshold
-(T, threshImg) = cv2.threshold(img_brd, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+(T, threshImg) = cv2.threshold(img_gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+
 #Aplicamos componentes conectados
 conn = 4
 output = cv2.connectedComponentsWithStats(threshImg, conn, cv2.CV_32S)
@@ -108,7 +110,6 @@ for i in range(0, numLabels):
 	(cX, cY) = centroids[i]
 
 for i in range(0, numLabels):
-
   # extract the connected component statistics and centroid for
   # the current label
   x = stats[i, cv2.CC_STAT_LEFT]
@@ -117,10 +118,10 @@ for i in range(0, numLabels):
   h = stats[i, cv2.CC_STAT_HEIGHT]
   area = stats[i, cv2.CC_STAT_AREA]
   (cX, cY) = centroids[i]
-
-  # Imprimir las medidas y área del objeto
+  # Imprimir las medidas, área y centroide del objeto
   print("Label No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))
 
+#Centroides de los puntos de referencia
 centroides = []
 for i in range(1, numLabels):
     # extract the connected component statistics and centroid for
@@ -155,6 +156,7 @@ for centroid in centroides:
     cX, cY = centroid
     print("Coordenadas: cX = {}, cY = {}".format(cX, cY))
     
+#Hallar punto de referencia mas cercano a los otros dos
 punto_cercano = None
 distancia_minima = float('inf')
 for i in range(len(centroides)):
@@ -169,13 +171,14 @@ for i in range(len(centroides)):
         punto_cercano = centroides[i]
 print("El punto más cercano a los otros dos en términos de distancia en ambos ejes es: {}".format(punto_cercano))
 
+#Punto esperado es donde deberia estar el punto mas cercano a los otros (esto se calibra manualmente)
 Punto_esperado= (170,546)
 
-# Coordenadas del punto de referencia (esquina izquierda superior)
+# Coordenadas del punto de referencia (Centro de la imagen)
 x1, y1 = Punto_centro_imagen
-# Coordenadas del primer punto (360, 125)
+# Coordenadas del primer punto (punto_cercano)
 x2, y2 = punto_cercano
-# Coordenadas del segundo punto (118, 590)
+# Coordenadas del segundo punto (Punto_esperado)
 x3,y3 = Punto_esperado
 
 # Paso 1: Calcular las diferencias en las coordenadas x y y para el primer punto
@@ -245,16 +248,16 @@ for i in range(0, numLabels):
   w = stats[i, cv2.CC_STAT_WIDTH]
   h = stats[i, cv2.CC_STAT_HEIGHT]
   area = stats[i, cv2.CC_STAT_AREA]
+  (cX, cY) = centroids[i]
+  #Guardamos algunas variables de los objetos encontrados en los array
   xwyh_Rojos.append((x+w, y+h))
   xy_Rojos.append((x, y))
-  (cX, cY) = centroids[i]
   centroides_rojos.append((int(cX),int(cY)))
-   
   # Imprimir las medidas y área del objeto
   if(i>0):
     print("Punto Rojo No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))
   
-# Contar la cantidad de contornos encontrados (que representan los puntos rojos)
+# Contar la cantidad de contornos encontrados (que representan los puntos rojos)(Se resta 1 para elimnar el fondo encontrado)
 cantidad_puntos = numLabels-1 
 # Mostrar la cantidad de puntos detectados
 print("Cantidad de puntos rojos detectados:", cantidad_puntos)
@@ -272,10 +275,10 @@ mask = cv2.inRange(hsv_image, lower_blue, upper_blue)
 kernel = np.ones((5, 5), np.uint8)
 dilated_mask = cv2.dilate(mask, kernel, iterations=1)
 # Mostrar la imagen original y la imagen segmentada
-
 cv2.imshow('Imagen Segmentada Azul', dilated_mask)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
+
 # Hacemos un threshold
 (T, threshImg) = cv2.threshold(dilated_mask, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
 # Aplicamos componentes conectados
@@ -294,12 +297,14 @@ for i in range(0, numLabels):
   w = stats[i, cv2.CC_STAT_WIDTH]
   h = stats[i, cv2.CC_STAT_HEIGHT]
   area = stats[i, cv2.CC_STAT_AREA]
+  (cX, cY) = centroids[i]
+  
+  #Guardamos algunas variables de los objetos encontrados en los array
   xwyh_Azules.append((x+w, y+h))
   xy_Azules.append((x, y))
-  (cX, cY) = centroids[i]
   centroides_azules.append((int(cX),int(cY)))
   
-  # Imprimir las medidas y área del objeto
+  # Imprimir las medidas y área del objeto menos la del fondo
   if(i>0):
     print("Punto Azul No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))
 
@@ -342,18 +347,21 @@ for i in range(0, numLabels):
   w = stats[i, cv2.CC_STAT_WIDTH]
   h = stats[i, cv2.CC_STAT_HEIGHT]
   area = stats[i, cv2.CC_STAT_AREA]
+  (cX, cY) = centroids[i]
+  #Guardamos algunas variables de los objetos encontrados en los array
   xwyh_verdes.append((w+x,h+y))
   xy_Verdes.append((x, y))
-  (cX, cY) = centroids[i]
   centroides_verdes.append((int(cX),int(cY)))
-  # Imprimir las medidas y área del obje to
+  # Imprimir las medidas, área y centroide del objeto menos la del fondo
   if(i>0):
       print("Punto Verde No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))
-  
+
+# Contar la cantidad de contornos encontrados (que representan los puntos verdes)(Se resta 1 para elimnar el fondo encontrado)
 cantidad_puntos = numLabels-1
 # Mostrar la cantidad de puntos detectados
 print("Cantidad de puntos verdes detectados:", cantidad_puntos)
-  
+
+#La tolerancia es la distancia máxima que se permite entre dos puntos para considerarlos iguales, Esto se necesita porque la rotacion puede darnos 1 o 2 pixeles de diferencia en coordenadas en diferentes casos
 tolerancia=3
 def comparar_coordenadas(coord1, coord2):
     dif_x = abs(coord1[0] - coord2[0])
@@ -366,7 +374,6 @@ output = rotated_image.copy()
 #Recorrer los centroides rojos
 centroide_rojos_Original=[(239,329),(296,342),(195,405),(244,407),(177,459),(308,475),(237,483)]
 #Aplicar funcion comparar_coordenadas para cada centroide rojo con cada centroide_rojos_Original
-
 for i in range(1, len(centroides_rojos)):
     for centroide_rojo_Original in centroide_rojos_Original:
         if comparar_coordenadas(centroides_rojos[i], centroide_rojo_Original):
@@ -400,8 +407,9 @@ for i in range(1,len(centroides_verdes)):
         else:
             cv2.rectangle(output, xy_Verdes[i], xwyh_verdes[i], (0, 0, 255), 3)
 
-# Esperar a que se presione una tecla y cerrar las ventanas
+#Mostrar la imagen final
 cv2.imshow("Final",output)
-        
+
+# Esperar a que se presione una tecla y cerrar las ventanas 
 cv2.waitKey(0)
 cv2.destroyAllWindows()
