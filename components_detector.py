@@ -349,7 +349,7 @@ for i in range(0, numLabels):
   area = stats[i, cv2.CC_STAT_AREA]
   (cX, cY) = centroids[i]
   #Guardamos algunas variables de los objetos encontrados en los array
-  xwyh_verdes.append((w+x,h+y))
+  xwyh_verdes.append((x+w,y+h))
   xy_Verdes.append((x, y))
   centroides_verdes.append((int(cX),int(cY)))
   # Imprimir las medidas, área y centroide del objeto menos la del fondo
@@ -366,8 +366,10 @@ tolerancia=3
 def comparar_coordenadas(coord1, coord2):
     dif_x = abs(coord1[0] - coord2[0])
     dif_y = abs(coord1[1] - coord2[1])
-    return dif_x <= tolerancia and dif_y <= tolerancia
-
+    if dif_x <= tolerancia and dif_y <= tolerancia:
+        return True
+    else:
+        return False
 
 output = rotated_image.copy()
       
@@ -381,8 +383,6 @@ for i in range(1, len(centroides_rojos)):
            break
         else:
             cv2.rectangle(output, xy_Rojos[i], xwyh_Rojos[i], (0, 0, 255), 3)
-     
-            
             
 #Recorrer los centroides azules
 centroide_azules_Original=[(311, 252),( 185,  337),(  300,  422),(  230,  536)]
@@ -394,8 +394,7 @@ for i in range(1, len(centroides_azules)):
            break
         else:
             cv2.rectangle(output, xy_Azules[i], xwyh_Azules[i], (0, 0, 255), 3)
-      
-
+    
 #Recorrer los centroides verdes
 centroide_verdes_Original=[ (227,278),(273,291),(255,375),(168,382)]
 #aplicar funcion comparar_coordenadas para cada centroide verde con cada centroide_verdes_Original
@@ -406,7 +405,7 @@ for i in range(1,len(centroides_verdes)):
            break
         else:
             cv2.rectangle(output, xy_Verdes[i], xwyh_verdes[i], (0, 0, 255), 3)
-
+    
 #Mostrar la imagen final
 cv2.imshow("Final",output)
 
