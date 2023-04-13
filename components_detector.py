@@ -23,15 +23,12 @@ def ResizeWithAspectRatio(image, width=None, height=None, inter=cv2.INTER_AREA):
     return cv2.resize(image, dim, interpolation=inter)
 
 #obtenemos la imagen original y la pasamos a grises
-img_org = cv2.imread("images\orgp7.jpg")
+img_org = cv2.imread("images\orgp9.jpg") 
 img_re = ResizeWithAspectRatio(img_org, width=480)
 img_gray = cv2.cvtColor(img_re, cv2.COLOR_BGR2GRAY)
 
-#hacemos un blurr
-img_brd = cv2.GaussianBlur(img_gray, (5, 5), 0)
-
 #hacemos un threshold
-(T, threshImg) = cv2.threshold(img_brd, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+(T, threshImg) = cv2.threshold(img_gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
 
 #Aplicamos componentes conectados
 conn = 4
@@ -67,12 +64,11 @@ for i in range(0, numLabels):
 
   # Imprimir las medidas y área del objeto
   print("Label No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))
-  if(i==0):
-      Punto_centro_imagen = (int(cX), int(cY))
-  elif(i==1):
+  if(i==1):
       Punto_centro = (int(cX), int(cY))
       
-
+Punto_centro_imagen = img_re.shape[1] // 2, img_re.shape[0] // 2
+ 
 # Calcular los centroides de los dos puntos
 x0, y0 = Punto_centro_imagen
 x1, y1 = Punto_centro
@@ -148,7 +144,7 @@ for i in range(1, numLabels):
         output = image_translated.copy()
         cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 0), 3)
         cv2.circle(output, (int(cX), int(cY)), 4, (0, 0, 255), -1)
-        cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 0), 3)
+
         print("Label No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))
         centroides.append((int(cX), int(cY)))
         cv2.imshow(" ",output)
@@ -238,14 +234,9 @@ conn = 4
 output = cv2.connectedComponentsWithStats(dilated_mask, conn, cv2.CV_32S)
 (numLabels, labels, stats, centroids) = output
 
-for i in range(0, numLabels):
-	x = stats[i, cv2.CC_STAT_LEFT]
-	y = stats[i, cv2.CC_STAT_TOP]
-	w = stats[i, cv2.CC_STAT_WIDTH]
-	h = stats[i, cv2.CC_STAT_HEIGHT]
-	area = stats[i, cv2.CC_STAT_AREA]
-	(cX, cY) = centroids[i]
- 
+xwyh_Rojos = []
+xy_Rojos=[]
+centroides_rojos = []
 for i in range(0, numLabels):
   # extract the connected component statistics and centroid for
   # the current label
@@ -254,13 +245,17 @@ for i in range(0, numLabels):
   w = stats[i, cv2.CC_STAT_WIDTH]
   h = stats[i, cv2.CC_STAT_HEIGHT]
   area = stats[i, cv2.CC_STAT_AREA]
+  xwyh_Rojos.append((x+w, y+h))
+  xy_Rojos.append((x, y))
   (cX, cY) = centroids[i]
+  centroides_rojos.append((int(cX),int(cY)))
+   
   # Imprimir las medidas y área del objeto
   if(i>0):
     print("Punto Rojo No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))
   
 # Contar la cantidad de contornos encontrados (que representan los puntos rojos)
-cantidad_puntos = numLabels-1
+cantidad_puntos = numLabels-1 
 # Mostrar la cantidad de puntos detectados
 print("Cantidad de puntos rojos detectados:", cantidad_puntos)
 
@@ -288,14 +283,9 @@ conn = 4
 output = cv2.connectedComponentsWithStats(dilated_mask, conn, cv2.CV_32S)
 (numLabels, labels, stats, centroids) = output
 
-for i in range(0, numLabels):
-	x = stats[i, cv2.CC_STAT_LEFT]
-	y = stats[i, cv2.CC_STAT_TOP]
-	w = stats[i, cv2.CC_STAT_WIDTH]
-	h = stats[i, cv2.CC_STAT_HEIGHT]
-	area = stats[i, cv2.CC_STAT_AREA]
-	(cX, cY) = centroids[i]
- 
+xwyh_Azules = []
+xy_Azules=[]
+centroides_azules = []
 for i in range(0, numLabels):
   # extract the connected component statistics and centroid for
   # the current label
@@ -304,7 +294,11 @@ for i in range(0, numLabels):
   w = stats[i, cv2.CC_STAT_WIDTH]
   h = stats[i, cv2.CC_STAT_HEIGHT]
   area = stats[i, cv2.CC_STAT_AREA]
+  xwyh_Azules.append((x+w, y+h))
+  xy_Azules.append((x, y))
   (cX, cY) = centroids[i]
+  centroides_azules.append((int(cX),int(cY)))
+  
   # Imprimir las medidas y área del objeto
   if(i>0):
     print("Punto Azul No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))
@@ -337,14 +331,9 @@ conn = 4
 output = cv2.connectedComponentsWithStats(dilated_mask, conn, cv2.CV_32S)
 (numLabels, labels, stats, centroids) = output
 
-for i in range(0, numLabels): 
-	x = stats[i, cv2.CC_STAT_LEFT]
-	y = stats[i, cv2.CC_STAT_TOP]
-	w = stats[i, cv2.CC_STAT_WIDTH]
-	h = stats[i, cv2.CC_STAT_HEIGHT]
-	area = stats[i, cv2.CC_STAT_AREA]
-	(cX, cY) = centroids[i]
- 
+xwyh_verdes = []
+xy_Verdes=[]
+centroides_verdes = []
 for i in range(0, numLabels):
   # extract the connected component statistics and centroid for
   # the current label
@@ -353,15 +342,66 @@ for i in range(0, numLabels):
   w = stats[i, cv2.CC_STAT_WIDTH]
   h = stats[i, cv2.CC_STAT_HEIGHT]
   area = stats[i, cv2.CC_STAT_AREA]
+  xwyh_verdes.append((w+x,h+y))
+  xy_Verdes.append((x, y))
   (cX, cY) = centroids[i]
-  # Imprimir las medidas y área del objeto
+  centroides_verdes.append((int(cX),int(cY)))
+  # Imprimir las medidas y área del obje to
   if(i>0):
       print("Punto Verde No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))
   
 cantidad_puntos = numLabels-1
 # Mostrar la cantidad de puntos detectados
 print("Cantidad de puntos verdes detectados:", cantidad_puntos)
- 
+  
+tolerancia=3
+def comparar_coordenadas(coord1, coord2):
+    dif_x = abs(coord1[0] - coord2[0])
+    dif_y = abs(coord1[1] - coord2[1])
+    return dif_x <= tolerancia and dif_y <= tolerancia
+
+
+output = rotated_image.copy()
+      
+#Recorrer los centroides rojos
+centroide_rojos_Original=[(239,329),(296,342),(195,405),(244,407),(177,459),(308,475),(237,483)]
+#Aplicar funcion comparar_coordenadas para cada centroide rojo con cada centroide_rojos_Original
+
+for i in range(1, len(centroides_rojos)):
+    for centroide_rojo_Original in centroide_rojos_Original:
+        if comparar_coordenadas(centroides_rojos[i], centroide_rojo_Original):
+           cv2.rectangle(output, xy_Rojos[i], xwyh_Rojos[i], (0, 255, 0), 3)
+           break
+        else:
+            cv2.rectangle(output, xy_Rojos[i], xwyh_Rojos[i], (0, 0, 255), 3)
+     
+            
+            
+#Recorrer los centroides azules
+centroide_azules_Original=[(311, 252),( 185,  337),(  300,  422),(  230,  536)]
+#Aplicar funcion comparar_coordenadas para cada centroide azul con cada centroide_azules_Original
+for i in range(1, len(centroides_azules)):
+    for centroide_azul_Original in centroide_azules_Original:
+        if comparar_coordenadas(centroides_azules[i], centroide_azul_Original):
+           cv2.rectangle(output, xy_Azules[i], xwyh_Azules[i], (0, 255, 0), 3)
+           break
+        else:
+            cv2.rectangle(output, xy_Azules[i], xwyh_Azules[i], (0, 0, 255), 3)
+      
+
+#Recorrer los centroides verdes
+centroide_verdes_Original=[ (227,278),(273,291),(255,375),(168,382)]
+#aplicar funcion comparar_coordenadas para cada centroide verde con cada centroide_verdes_Original
+for i in range(1,len(centroides_verdes)):
+    for centroide_verde_Original in centroide_verdes_Original:
+        if comparar_coordenadas(centroides_verdes[i], centroide_verde_Original):
+           cv2.rectangle(output, xy_Verdes[i], xwyh_verdes[i], (0, 255, 0), 3)
+           break
+        else:
+            cv2.rectangle(output, xy_Verdes[i], xwyh_verdes[i], (0, 0, 255), 3)
+
 # Esperar a que se presione una tecla y cerrar las ventanas
+cv2.imshow("Final",output)
+        
 cv2.waitKey(0)
 cv2.destroyAllWindows()
