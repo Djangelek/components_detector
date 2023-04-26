@@ -541,7 +541,7 @@ def my_function(image_path, calibrar):
         texto5.configure(text="Estado: Aprobado")
     else:
         texto5.configure(text="Estado: No Aprobado")
-        
+#OK
 root.mainloop()
 
 
