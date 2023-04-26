@@ -183,6 +183,9 @@ def Proceso(img_ubicacion, calibrar):
         global LyA_rojos_Original
         global LyA_azules_Original
         global LyA_verdes_Original
+        global LyA_rojos
+        global LyA_Azules
+        global LyA_Verdes
     
         centroide_rojos_Original=[]
         centroide_azules_Original=[]
@@ -190,6 +193,9 @@ def Proceso(img_ubicacion, calibrar):
         LyA_rojos_Original=[]
         LyA_azules_Original=[]
         LyA_verdes_Original=[]
+        LyA_rojos=[]
+        LyA_Azules=[]
+        LyA_Verdes=[]
     
     # Convertir la imagen a espacio de color HSV
     hsv_image = cv2.cvtColor(rotated_image, cv2.COLOR_BGR2HSV)
@@ -231,6 +237,7 @@ def Proceso(img_ubicacion, calibrar):
     #Guardamos algunas variables de los objetos encontrados en los array
       xwyh_Rojos.append((x+w, y+h))
       xy_Rojos.append((x, y))
+      LyA_rojos.append((max(w, h), min(w, h)))
       centroides_rojos.append((int(cX),int(cY)))
       
     # Imprimir las medidas y área del objeto
@@ -377,10 +384,12 @@ def Proceso(img_ubicacion, calibrar):
     #Aplicar funcion comparar_coordenadas para cada centroide rojo con cada centroide_rojos_Original
     for i in range(1, len(centroides_rojos)):
         for centroide_rojo_Original in centroide_rojos_Original:
+            ubicacion=centroide_rojos_Original.index(centroide_rojo_Original)
             if comparar_coordenadas(centroides_rojos[i], centroide_rojo_Original):
-               cv2.rectangle(output, xy_Rojos[i], xwyh_Rojos[i], (0, 255, 0), 3)
-               NumeroPuntosRojos+=1
-               break
+                if comparar_LyA(LyA_rojos_Original[ubicacion], LyA_rojos[i]):
+                    cv2.rectangle(output, xy_Rojos[i], xwyh_Rojos[i], (0, 255, 0), 3)
+                    NumeroPuntosRojos+=1
+                    break
             else:
                 cv2.rectangle(output, xy_Rojos[i], xwyh_Rojos[i], (0, 0, 255), 3)     
                    
