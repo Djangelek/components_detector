@@ -180,9 +180,16 @@ def Proceso(img_ubicacion, calibrar):
         global centroide_rojos_Original
         global centroide_azules_Original
         global centroide_verdes_Original
+        global LyA_rojos_Original
+        global LyA_azules_Original
+        global LyA_verdes_Original
+    
         centroide_rojos_Original=[]
         centroide_azules_Original=[]
         centroide_verdes_Original=[]
+        LyA_rojos_Original=[]
+        LyA_azules_Original=[]
+        LyA_verdes_Original=[]
     
     # Convertir la imagen a espacio de color HSV
     hsv_image = cv2.cvtColor(rotated_image, cv2.COLOR_BGR2HSV)
@@ -231,6 +238,7 @@ def Proceso(img_ubicacion, calibrar):
         print("Punto Rojo No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))  
         if calibrar==True:
             centroide_rojos_Original.append((int(cX),int(cY)))
+            LyA_rojos_Original.append((max(w, h), min(w, h)))
     # Contar la cantidad de contornos encontrados (que representan los puntos rojos)(Se resta 1 para elimnar el fondo encontrado)
     cantidad_puntos = numLabels-1 
     # Mostrar la cantidad de puntos detectados
@@ -283,6 +291,7 @@ def Proceso(img_ubicacion, calibrar):
         print("Punto Azul No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))
         if calibrar==True:
             centroide_azules_Original.append((int(cX),int(cY)))
+            LyA_azules_Original.append((max(w, h), min(w, h)))
     cantidad_puntos = numLabels-1
     # Mostrar la cantidad de puntos detectados
     print("Cantidad de puntos Azules detectados:", cantidad_puntos)
@@ -332,6 +341,7 @@ def Proceso(img_ubicacion, calibrar):
           print("Punto Verde No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))
           if calibrar==True:
             centroide_verdes_Original.append((int(cX),int(cY)))
+            LyA_verdes_Original.append((max(w, h), min(w, h)))
     # Contar la cantidad de contornos encontrados (que representan los puntos verdes)(Se resta 1 para elimnar el fondo encontrado)
     cantidad_puntos = numLabels-1
     # Mostrar la cantidad de puntos detectados
@@ -348,6 +358,16 @@ def Proceso(img_ubicacion, calibrar):
             return True
         else:
             return False
+        
+    #Comparar largo y alto
+    def comparar_LyA(LyA1, LyA2):
+        dif_L = abs(LyA1[0] - LyA2[0])
+        dif_A = abs(LyA1[1] - LyA2[1])
+        if dif_L <= tolerancia and dif_A <= tolerancia:
+            return True
+        else:
+            return False
+        
 
     output = rotated_image.copy()
     
@@ -386,7 +406,8 @@ def Proceso(img_ubicacion, calibrar):
             else:
                 cv2.rectangle(output, xy_Verdes[i], xwyh_verdes[i], (0, 0, 255), 3)
                 
-    NumeroPuntosIncorrectos=NumeroPuntosIncorrectos-NumeroPuntosRojos-NumeroPuntosAzules-NumeroPuntosVerdes  
+    NumeroPuntosIncorrectos=NumeroPuntosIncorrectos-NumeroPuntosRojos-NumeroPuntosAzules-NumeroPuntosVerdes 
+    print(LyA_rojos_Original, LyA_azules_Original, LyA_verdes_Original)
     #Mostrar la imagen final
     #cv2.imshow("Final",output)
     cv2.imwrite("output/output.jpg", output)
@@ -411,7 +432,6 @@ image_names = os.listdir(image_folder)
 current_image = 0
 image_list = []
 
-
 # Carga todas las imágenes en la lista de imágenes
 for image_name in image_names:
     image_path = os.path.join(image_folder, image_name)
@@ -419,6 +439,25 @@ for image_name in image_names:
     img = img.resize((200, 400), Image.ANTIALIAS)
     photo = ImageTk.PhotoImage(img)
     image_list.append(photo)
+    
+texto1 = Label(text="Verde: 0/0 ")
+texto1.pack()
+texto2 = Label(text="Azul: 0/0 ")
+texto2.pack()
+texto3 = Label(text="Rojo: 0/0")
+texto3.pack()
+texto4 = Label(text="Lugar incorrecto: 0")
+texto4.pack()
+texto5 = Label(text="Estado: No calibrado ")
+texto5.pack()
+
+# Crea dos botones para navegar por las imágenes
+previous_button = Button(root, text="Anterior", command=lambda: change_image(-1))
+previous_button.pack(side=LEFT, padx=20)
+next_button = Button(root, text="Siguiente", command=lambda: change_image(1))
+next_button.pack(side=LEFT,padx=20)
+
+
 
 # Muestra la primera imagen en el widget de lienzo
 label1 = Label(canvas)
@@ -430,23 +469,6 @@ label2 = Label(canvas)
 label2.pack(side='right')
 imagen2_tk = image_list[current_image]
 label2.config(image=imagen2_tk)
-
-texto1 = Label(text="Verde: 0/0 ")
-texto1.pack()
-texto2 = Label(text="Azul: 0/0 ")
-texto2.pack()
-texto3 = Label(text="Rojo: 0/0")
-texto3.pack()
-texto4 = Label(text="Lugar incorrecto:0")
-texto4.pack()
-texto5 = Label(text="Estado:")
-texto5.pack()
-
-# Crea dos botones para navegar por las imágenes
-previous_button = Button(root, text="Anterior", command=lambda: change_image(-1))
-previous_button.pack(side=LEFT, padx=20)
-next_button = Button(root, text="Siguiente", command=lambda: change_image(1))
-next_button.pack(side=LEFT)
 
 # Crea un tercer botón para guardar la dirección de la imagen actual y ejecutar una función
 def save_and_execute():
@@ -511,10 +533,10 @@ def my_function(image_path, calibrar):
     imagen2_tk = photo2
     label2.config(image=imagen2_tk)
     
-    texto1.configure(text="Verde:"+str(NumeroPuntosVerdes) +"/"+str(len(centroide_verdes_Original)))
-    texto2.configure(text="Azul:"+str(NumeroPuntosAzules)+"/"+str(len(centroide_azules_Original)))
-    texto3.configure(text="Rojo:"+str(NumeroPuntosRojos)+"/"+str(len(centroide_rojos_Original)))
-    texto4.configure(text="Lugar Incorrecto:"+str(NumeroPuntosIncorrectos))
+    texto1.configure(text="Verde: "+str(NumeroPuntosVerdes) +"/"+str(len(centroide_verdes_Original)))
+    texto2.configure(text="Azul: "+str(NumeroPuntosAzules)+"/"+str(len(centroide_azules_Original)))
+    texto3.configure(text="Rojo: "+str(NumeroPuntosRojos)+"/"+str(len(centroide_rojos_Original)))
+    texto4.configure(text="Lugar Incorrecto: "+str(NumeroPuntosIncorrectos))
     if (NumeroPuntosIncorrectos==0 and (NumeroPuntosVerdes+NumeroPuntosAzules+NumeroPuntosRojos)==(len(centroide_rojos_Original)+len(centroide_azules_Original)+len(centroide_verdes_Original))):
         texto5.configure(text="Estado: Aprobado")
     else:
