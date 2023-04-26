@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import os
 from tkinter import *
 from PIL import Image, ImageTk
+from tkinter import messagebox
 
 #Si no existe carpeta output la crea
 
@@ -32,7 +33,7 @@ def ResizeWithAspectRatio(image, width=None, height=None, inter=cv2.INTER_AREA):
     return cv2.resize(image, dim, interpolation=inter)
 
 
-def Proceso(img_ubicacion):
+def Proceso(img_ubicacion, calibrar):
     global output, NumeroPuntosVerdes, NumeroPuntosAzules, NumeroPuntosRojos
     global NumeroPuntosIncorrectos
     NumeroPuntosVerdes=0
@@ -123,8 +124,10 @@ def Proceso(img_ubicacion):
 
             print("Label No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))
             centroides.append((int(cX), int(cY)))
-            cv2.imshow(" ",output)
-            cv2.waitKey(0)       
+            
+            #Visualizar la imagen
+            #cv2.imshow(" ",output)
+            #cv2.waitKey(0)       
     #imprimir los centroides guardados en el diccionario
     for centroid in centroides:
         cX, cY = centroid
@@ -170,8 +173,17 @@ def Proceso(img_ubicacion):
     rotation_matrix = cv2.getRotationMatrix2D(Punto_centro_imagen, -delta_theta_deg, 1.0)
     # Aplicar la matriz de transformación a la imagen
     rotated_image = cv2.warpAffine(image_translated.copy(), rotation_matrix, (image_translated.copy().shape[1], image_translated.copy().shape[0]))
-    cv2.imshow('Imagen rotada', rotated_image)
-    cv2.waitKey(0)
+    #cv2.imshow('Imagen rotada', rotated_image)
+    #cv2.waitKey(0)
+    
+    if(calibrar==True):
+        global centroide_rojos_Original
+        global centroide_azules_Original
+        global centroide_verdes_Original
+        centroide_rojos_Original=[]
+        centroide_azules_Original=[]
+        centroide_verdes_Original=[]
+    
     # Convertir la imagen a espacio de color HSV
     hsv_image = cv2.cvtColor(rotated_image, cv2.COLOR_BGR2HSV)
     # Definir el rango de colores a detectar (en este caso, color rojo)
@@ -187,9 +199,9 @@ def Proceso(img_ubicacion):
     kernel = np.ones((5, 5), np.uint8)
     dilated_mask = cv2.dilate(mask, kernel, iterations=1)
     # Mostrar la imagen original y la imagen segmentada
-    cv2.imshow('Imagen Segmentada ROJO', dilated_mask)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    #cv2.imshow('Imagen Segmentada ROJO', dilated_mask)
+    #cv2.waitKey(0)
+    #cv2.destroyAllWindows()
     # Hacemos un threshold
     (T, threshImg) = cv2.threshold(dilated_mask, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
     # Aplicamos componentes conectados
@@ -213,14 +225,20 @@ def Proceso(img_ubicacion):
       xwyh_Rojos.append((x+w, y+h))
       xy_Rojos.append((x, y))
       centroides_rojos.append((int(cX),int(cY)))
+      
     # Imprimir las medidas y área del objeto
       if(i>0):
         print("Punto Rojo No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))  
+        if calibrar==True:
+            centroide_rojos_Original.append((int(cX),int(cY)))
     # Contar la cantidad de contornos encontrados (que representan los puntos rojos)(Se resta 1 para elimnar el fondo encontrado)
     cantidad_puntos = numLabels-1 
     # Mostrar la cantidad de puntos detectados
     print("Cantidad de puntos rojos detectados:", cantidad_puntos)
     NumeroPuntosIncorrectos+=cantidad_puntos
+    print(centroide_rojos_Original)
+    
+    
     # Definir el rango de colores a detectar (en este caso, color Azul)
     lower_blue = np.array([90, 60, 60])  # Valor mínimo de H, S y V para azul
     upper_blue= np.array([130, 255, 255])  # Valor máximo de H, S y V para azul
@@ -234,9 +252,9 @@ def Proceso(img_ubicacion):
     kernel = np.ones((5, 5), np.uint8)
     dilated_mask = cv2.dilate(mask, kernel, iterations=1)
     # Mostrar la imagen original y la imagen segmentada
-    cv2.imshow('Imagen Segmentada Azul', dilated_mask)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    #cv2.imshow('Imagen Segmentada Azul', dilated_mask)
+    #cv2.waitKey(0)
+    #cv2.destroyAllWindows()
     # Hacemos un threshold
     (T, threshImg) = cv2.threshold(dilated_mask, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
     # Aplicamos componentes conectados
@@ -259,9 +277,12 @@ def Proceso(img_ubicacion):
       xwyh_Azules.append((x+w, y+h))
       xy_Azules.append((x, y))
       centroides_azules.append((int(cX),int(cY)))
+      
     # Imprimir las medidas y área del objeto menos la del fondo
       if(i>0):
         print("Punto Azul No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))
+        if calibrar==True:
+            centroide_azules_Original.append((int(cX),int(cY)))
     cantidad_puntos = numLabels-1
     # Mostrar la cantidad de puntos detectados
     print("Cantidad de puntos Azules detectados:", cantidad_puntos)
@@ -279,9 +300,9 @@ def Proceso(img_ubicacion):
     kernel = np.ones((5, 5), np.uint8)
     dilated_mask = cv2.dilate(mask, kernel, iterations=1)
     # Mostrar la imagen original y la imagen segmentada
-    cv2.imshow('Imagen Segmentada VERDE', dilated_mask)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    #cv2.imshow('Imagen Segmentada VERDE', dilated_mask)
+    #cv2.waitKey(0)
+    #cv2.destroyAllWindows()
     # Hacemos un threshold
     (T, threshImg) = cv2.threshold(dilated_mask, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
     # Aplicamos componentes conectados
@@ -304,18 +325,22 @@ def Proceso(img_ubicacion):
       xwyh_verdes.append((x+w,y+h))
       xy_Verdes.append((x, y))
       centroides_verdes.append((int(cX),int(cY)))
+      
+      
     # Imprimir las medidas, área y centroide del objeto menos la del fondo
       if(i>0):
           print("Punto Verde No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))
-
+          if calibrar==True:
+            centroide_verdes_Original.append((int(cX),int(cY)))
     # Contar la cantidad de contornos encontrados (que representan los puntos verdes)(Se resta 1 para elimnar el fondo encontrado)
     cantidad_puntos = numLabels-1
     # Mostrar la cantidad de puntos detectados
     print("Cantidad de puntos verdes detectados:", cantidad_puntos)
     NumeroPuntosIncorrectos+=cantidad_puntos
+    
 
     #La tolerancia es la distancia máxima que se permite entre dos puntos para considerarlos iguales, Esto se necesita porque la rotacion puede darnos 1 o 2 pixeles de diferencia en coordenadas en diferentes casos
-    tolerancia=3
+    tolerancia=2
     def comparar_coordenadas(coord1, coord2):
         dif_x = abs(coord1[0] - coord2[0])
         dif_y = abs(coord1[1] - coord2[1])
@@ -325,9 +350,10 @@ def Proceso(img_ubicacion):
             return False
 
     output = rotated_image.copy()
+    
+    print(centroide_azules_Original, centroide_verdes_Original, centroide_rojos_Original)
       
-    #Recorrer los centroides rojos
-    centroide_rojos_Original=[(239,329),(296,342),(195,405),(244,407),(177,459),(308,475),(237,483)]
+    
     #Aplicar funcion comparar_coordenadas para cada centroide rojo con cada centroide_rojos_Original
     for i in range(1, len(centroides_rojos)):
         for centroide_rojo_Original in centroide_rojos_Original:
@@ -336,9 +362,9 @@ def Proceso(img_ubicacion):
                NumeroPuntosRojos+=1
                break
             else:
-                cv2.rectangle(output, xy_Rojos[i], xwyh_Rojos[i], (0, 0, 255), 3)        
+                cv2.rectangle(output, xy_Rojos[i], xwyh_Rojos[i], (0, 0, 255), 3)     
+                   
     #Recorrer los centroides azules
-    centroide_azules_Original=[(311, 252),( 185,  337),(  300,  422),(  230,  536)]
     #Aplicar funcion comparar_coordenadas para cada centroide azul con cada centroide_azules_Original
     for i in range(1, len(centroides_azules)):
         for centroide_azul_Original in centroide_azules_Original:
@@ -348,8 +374,8 @@ def Proceso(img_ubicacion):
                break
             else:
                 cv2.rectangle(output, xy_Azules[i], xwyh_Azules[i], (0, 0, 255), 3)
+                
     #Recorrer los centroides verdes
-    centroide_verdes_Original=[ (227,278),(273,291),(255,375),(168,382)]
     #aplicar funcion comparar_coordenadas para cada centroide verde con cada centroide_verdes_Original
     for i in range(1,len(centroides_verdes)):
         for centroide_verde_Original in centroide_verdes_Original:
@@ -362,12 +388,13 @@ def Proceso(img_ubicacion):
                 
     NumeroPuntosIncorrectos=NumeroPuntosIncorrectos-NumeroPuntosRojos-NumeroPuntosAzules-NumeroPuntosVerdes  
     #Mostrar la imagen final
-    cv2.imshow("Final",output)
+    #cv2.imshow("Final",output)
     cv2.imwrite("output/output.jpg", output)
     # Esperar a que se presione una tecla y cerrar las ventanas 
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    #cv2.waitKey(0)
+    #cv2.destroyAllWindows()
 
+ProgramaCalibrado=False
 # Crea una ventana principal
 root = Tk()
 root.title("Mostrar imágenes")
@@ -404,11 +431,11 @@ label2.pack(side='right')
 imagen2_tk = image_list[current_image]
 label2.config(image=imagen2_tk)
 
-texto1 = Label(text="Verde: 0/7 ")
+texto1 = Label(text="Verde: 0/0 ")
 texto1.pack()
-texto2 = Label(text="Azul: 0/8 ")
+texto2 = Label(text="Azul: 0/0 ")
 texto2.pack()
-texto3 = Label(text="Rojo: 0/6")
+texto3 = Label(text="Rojo: 0/0")
 texto3.pack()
 texto4 = Label(text="Lugar incorrecto:0")
 texto4.pack()
@@ -427,10 +454,24 @@ def save_and_execute():
     image_path = os.path.join(image_folder, image_names[current_image])
     with open("image_path.txt", "w") as f:
         f.write(image_path)
-    my_function(image_path)
+    my_function(image_path, False)
+    
+
+def calibrarPrograma():
+    global current_image
+    image_path = os.path.join(image_folder, image_names[current_image])
+    with open("image_path.txt", "w") as f:
+        f.write(image_path)
+    my_function(image_path, True)
+    global ProgramaCalibrado
+    ProgramaCalibrado=True
+    
 
 save_button = Button(root, text="Ejecutar", command=save_and_execute)
 save_button.pack(side=LEFT, padx=20)
+
+calibrar_button = Button(root, text="Calibrar", command=calibrarPrograma)
+calibrar_button.pack(side=LEFT, padx=20)
 
 # Función para cambiar la imagen actual y mostrarla en el widget de lienzo
 def change_image(direction):
@@ -449,25 +490,32 @@ def change_image(direction):
 
 
 # Función para ejecutar en la imagen actual
-
-def my_function(image_path):
+def my_function(image_path, calibrar):
     # Ejecuta alguna función en la imagen actual
-    Proceso(image_path)
+    if(calibrar==True):
+        Proceso(image_path,True)
+        global CalibracionLista
+        CalibracionLista=True
+    elif(calibrar==False and ProgramaCalibrado==True):
+        Proceso(image_path, False)
+    else:
+        messagebox.showerror("Error", "Primero tiene que calibrar el programa.")
+        return
+        
     # Cambia la imagen de salida
     global imagen2_tk
     
-
     img2 = Image.open("output/output.jpg")
     img2 = img2.resize((200, 400), Image.LANCZOS)
     photo2 = ImageTk.PhotoImage(img2)
     imagen2_tk = photo2
     label2.config(image=imagen2_tk)
     
-    texto1.configure(text="Verde:"+str(NumeroPuntosVerdes) +"/4 ")
-    texto2.configure(text="Azul:"+str(NumeroPuntosAzules)+"/4 ")
-    texto3.configure(text="Rojo:"+str(NumeroPuntosRojos)+"/7")
+    texto1.configure(text="Verde:"+str(NumeroPuntosVerdes) +"/"+str(len(centroide_verdes_Original)))
+    texto2.configure(text="Azul:"+str(NumeroPuntosAzules)+"/"+str(len(centroide_azules_Original)))
+    texto3.configure(text="Rojo:"+str(NumeroPuntosRojos)+"/"+str(len(centroide_rojos_Original)))
     texto4.configure(text="Lugar Incorrecto:"+str(NumeroPuntosIncorrectos))
-    if (NumeroPuntosIncorrectos==0 and (NumeroPuntosVerdes+NumeroPuntosAzules+NumeroPuntosRojos)==15):
+    if (NumeroPuntosIncorrectos==0 and (NumeroPuntosVerdes+NumeroPuntosAzules+NumeroPuntosRojos)==(len(centroide_rojos_Original)+len(centroide_azules_Original)+len(centroide_verdes_Original))):
         texto5.configure(text="Estado: Aprobado")
     else:
         texto5.configure(text="Estado: No Aprobado")
