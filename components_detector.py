@@ -292,6 +292,7 @@ def Proceso(img_ubicacion, calibrar):
       xwyh_Azules.append((x+w, y+h))
       xy_Azules.append((x, y))
       centroides_azules.append((int(cX),int(cY)))
+      LyA_Azules.append((max(w, h), min(w, h)))
       
     # Imprimir las medidas y área del objeto menos la del fondo
       if(i>0):
@@ -397,10 +398,12 @@ def Proceso(img_ubicacion, calibrar):
     #Aplicar funcion comparar_coordenadas para cada centroide azul con cada centroide_azules_Original
     for i in range(1, len(centroides_azules)):
         for centroide_azul_Original in centroide_azules_Original:
+            ubicacion=centroide_azules_Original.index(centroide_azul_Original)
             if comparar_coordenadas(centroides_azules[i], centroide_azul_Original):
-               cv2.rectangle(output, xy_Azules[i], xwyh_Azules[i], (0, 255, 0), 3)
-               NumeroPuntosAzules+=1
-               break
+                if comparar_LyA(LyA_azules_Original[ubicacion], LyA_Azules[i]):
+                    cv2.rectangle(output, xy_Azules[i], xwyh_Azules[i], (0, 255, 0), 3)
+                    NumeroPuntosAzules+=1
+                    break
             else:
                 cv2.rectangle(output, xy_Azules[i], xwyh_Azules[i], (0, 0, 255), 3)
                 
