@@ -342,7 +342,7 @@ def Proceso(img_ubicacion, calibrar):
       xwyh_verdes.append((x+w,y+h))
       xy_Verdes.append((x, y))
       centroides_verdes.append((int(cX),int(cY)))
-      
+      LyA_Verdes.append((max(w, h), min(w, h)))
       
     # Imprimir las medidas, área y centroide del objeto menos la del fondo
       if(i>0):
@@ -369,11 +369,14 @@ def Proceso(img_ubicacion, calibrar):
         
     #Comparar largo y alto
     def comparar_LyA(LyA1, LyA2):
+        print(LyA1, LyA2)
         dif_L = abs(LyA1[0] - LyA2[0])
         dif_A = abs(LyA1[1] - LyA2[1])
         if dif_L <= tolerancia and dif_A <= tolerancia:
+            print("True")
             return True
         else:
+            print("False")
             return False
         
 
@@ -391,6 +394,9 @@ def Proceso(img_ubicacion, calibrar):
                     cv2.rectangle(output, xy_Rojos[i], xwyh_Rojos[i], (0, 255, 0), 3)
                     NumeroPuntosRojos+=1
                     break
+                else:
+                    cv2.rectangle(output, xy_Rojos[i], xwyh_Rojos[i], (0, 0, 255), 3)
+                    break
             else:
                 cv2.rectangle(output, xy_Rojos[i], xwyh_Rojos[i], (0, 0, 255), 3)     
                    
@@ -404,6 +410,9 @@ def Proceso(img_ubicacion, calibrar):
                     cv2.rectangle(output, xy_Azules[i], xwyh_Azules[i], (0, 255, 0), 3)
                     NumeroPuntosAzules+=1
                     break
+                else:
+                    cv2.rectangle(output, xy_Azules[i], xwyh_Azules[i], (0, 0, 255), 3)
+                    break
             else:
                 cv2.rectangle(output, xy_Azules[i], xwyh_Azules[i], (0, 0, 255), 3)
                 
@@ -411,10 +420,15 @@ def Proceso(img_ubicacion, calibrar):
     #aplicar funcion comparar_coordenadas para cada centroide verde con cada centroide_verdes_Original
     for i in range(1,len(centroides_verdes)):
         for centroide_verde_Original in centroide_verdes_Original:
+            ubicacion=centroide_verdes_Original.index(centroide_verde_Original)
             if comparar_coordenadas(centroides_verdes[i], centroide_verde_Original):
-               cv2.rectangle(output, xy_Verdes[i], xwyh_verdes[i], (0, 255, 0), 3)
-               NumeroPuntosVerdes+=1
-               break
+                if comparar_LyA(LyA_verdes_Original[ubicacion], LyA_Verdes[i]):
+                    cv2.rectangle(output, xy_Verdes[i], xwyh_verdes[i], (0, 255, 0), 3)
+                    NumeroPuntosVerdes+=1
+                    break
+                else:
+                    cv2.rectangle(output, xy_Verdes[i], xwyh_verdes[i], (0, 0, 255), 3)
+                    break
             else:
                 cv2.rectangle(output, xy_Verdes[i], xwyh_verdes[i], (0, 0, 255), 3)
                 
@@ -554,14 +568,3 @@ def my_function(image_path, calibrar):
     else:
         texto5.configure(text="Estado: No Aprobado")
 root.mainloop()
-
-    
-    
-
-
-
-
-
-
-
-
