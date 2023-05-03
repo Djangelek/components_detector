@@ -164,13 +164,13 @@ def Proceso(img_ubicacion, calibrar):
     theta_rad1 = mt.atan2(delta_y1, delta_x1)
     theta_rad2 = mt.atan2(delta_y2, delta_x2)
     # Paso 4: Calcular la diferencia de ángulos entre los dos puntos
-    delta_theta_rad = theta_rad2 - theta_rad1
+    delta_theta_rad =  theta_rad1-theta_rad2
     # Paso 5: Convertir la diferencia de ángulos a grados
     delta_theta_deg = mt.degrees(delta_theta_rad)
     #imprimir el ángulo de rotación
     print("El ángulo de rotación es: {}".format(delta_theta_deg))
     # Obtener la matriz de transformación de rotación
-    rotation_matrix = cv2.getRotationMatrix2D(Punto_centro_imagen, -delta_theta_deg, 1.0)
+    rotation_matrix = cv2.getRotationMatrix2D(Punto_centro_imagen, delta_theta_deg, 1.0)
     # Aplicar la matriz de transformación a la imagen
     rotated_image = cv2.warpAffine(image_translated.copy(), rotation_matrix, (image_translated.copy().shape[1], image_translated.copy().shape[0]))
     #cv2.imshow('Imagen rotada', rotated_image)
