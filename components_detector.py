@@ -126,8 +126,8 @@ def Proceso(img_ubicacion, calibrar):
             centroides.append((int(cX), int(cY)))
             
             #Visualizar la imagen
-            #cv2.imshow(" ",output)
-            #cv2.waitKey(0)       
+            cv2.imshow(" ",output)
+            cv2.waitKey(0)       
     #imprimir los centroides guardados en el diccionario
     for centroid in centroides:
         cX, cY = centroid
@@ -173,8 +173,8 @@ def Proceso(img_ubicacion, calibrar):
     rotation_matrix = cv2.getRotationMatrix2D(Punto_centro_imagen, delta_theta_deg, 1.0)
     # Aplicar la matriz de transformación a la imagen
     rotated_image = cv2.warpAffine(image_translated.copy(), rotation_matrix, (image_translated.copy().shape[1], image_translated.copy().shape[0]))
-    #cv2.imshow('Imagen rotada', rotated_image)
-    #cv2.waitKey(0)
+    cv2.imshow('Imagen rotada', rotated_image)
+    cv2.waitKey(0)
     
     if(calibrar==True):
         global centroide_rojos_Original
@@ -212,8 +212,8 @@ def Proceso(img_ubicacion, calibrar):
     kernel = np.ones((5, 5), np.uint8)
     dilated_mask = cv2.dilate(mask, kernel, iterations=1)
     # Mostrar la imagen original y la imagen segmentada
-    #cv2.imshow('Imagen Segmentada ROJO', dilated_mask)
-    #cv2.waitKey(0)
+    cv2.imshow('Imagen Segmentada ROJO', dilated_mask)
+    cv2.waitKey(0)
     #cv2.destroyAllWindows()
     # Hacemos un threshold
     (T, threshImg) = cv2.threshold(dilated_mask, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
@@ -267,8 +267,8 @@ def Proceso(img_ubicacion, calibrar):
     kernel = np.ones((5, 5), np.uint8)
     dilated_mask = cv2.dilate(mask, kernel, iterations=1)
     # Mostrar la imagen original y la imagen segmentada
-    #cv2.imshow('Imagen Segmentada Azul', dilated_mask)
-    #cv2.waitKey(0)
+    cv2.imshow('Imagen Segmentada Azul', dilated_mask)
+    cv2.waitKey(0)
     #cv2.destroyAllWindows()
     # Hacemos un threshold
     (T, threshImg) = cv2.threshold(dilated_mask, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
@@ -317,8 +317,8 @@ def Proceso(img_ubicacion, calibrar):
     kernel = np.ones((5, 5), np.uint8)
     dilated_mask = cv2.dilate(mask, kernel, iterations=1)
     # Mostrar la imagen original y la imagen segmentada
-    #cv2.imshow('Imagen Segmentada VERDE', dilated_mask)
-    #cv2.waitKey(0)
+    cv2.imshow('Imagen Segmentada VERDE', dilated_mask)
+    cv2.waitKey(0)
     #cv2.destroyAllWindows()
     # Hacemos un threshold
     (T, threshImg) = cv2.threshold(dilated_mask, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
@@ -435,10 +435,10 @@ def Proceso(img_ubicacion, calibrar):
     NumeroPuntosIncorrectos=NumeroPuntosIncorrectos-NumeroPuntosRojos-NumeroPuntosAzules-NumeroPuntosVerdes 
     print(LyA_rojos_Original, LyA_azules_Original, LyA_verdes_Original)
     #Mostrar la imagen final
-    #cv2.imshow("Final",output)
+    cv2.imshow("Final",output)
     cv2.imwrite("output/output.jpg", output)
     # Esperar a que se presione una tecla y cerrar las ventanas 
-    #cv2.waitKey(0)
+    cv2.waitKey(0)
     #cv2.destroyAllWindows()
 
 ProgramaCalibrado=False
