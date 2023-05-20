@@ -140,9 +140,9 @@ def Proceso(img_ubicacion, calibrar):
         (cX, cY) = centroids[i]
         # ensure the width, height, and area are all neither too small
         # nor too big
-        keepWidth = w > 10 and w < 30
-        keepHeight = h > 10 and h < 30
-        keepArea = area > 100 and area < 700
+        keepWidth = w > 8 and w < 30
+        keepHeight = h > 8 and h < 30
+        keepArea = area > 80 and area < 700
         # ensure the connected component we are examining passes all
         # three tests
         if all((keepWidth, keepHeight, keepArea)):
@@ -239,7 +239,7 @@ def Proceso(img_ubicacion, calibrar):
     # Crear una máscara que filtre los píxeles dentro del rango de colores definido
     mask = cv2.inRange(hsv_image, lower_red, upper_red)
     # Aplicar filtro de dilatación a la máscara
-    kernel = np.ones((5, 5), np.uint8)
+    kernel = np.ones((10, 10), np.uint8)
     dilated_mask = cv2.dilate(mask, kernel, iterations=1)
     # Mostrar la imagen original y la imagen segmentada
     cv2.imshow('Imagen Segmentada ROJO', dilated_mask)
@@ -251,9 +251,6 @@ def Proceso(img_ubicacion, calibrar):
     cv2.imshow('Imagen Segmentada Roja', apertura)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
-    
-    
-    
     
     # Hacemos un threshold
     (T, threshImg) = cv2.threshold(apertura, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
