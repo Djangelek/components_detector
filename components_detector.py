@@ -34,12 +34,12 @@ def ResizeWithAspectRatio(image, width=None, height=None, inter=cv2.INTER_AREA):
 
 
 def Proceso(img_ubicacion, calibrar):
-    global output, NumeroPuntosAmarillos, NumeroPuntosAzules, NumeroPuntosRojos
-    global NumeroPuntosIncorrectos
-    NumeroPuntosAmarillos=0
-    NumeroPuntosAzules=0
-    NumeroPuntosRojos=0
-    NumeroPuntosIncorrectos=0
+    global output, NumeroLegosAmarillos, NumeroLegosAzules, NumeroLegosRojos
+    global NumeroLegosIncorrectos
+    NumeroLegosAmarillos=0
+    NumeroLegosAzules=0
+    NumeroLegosRojos=0
+    NumeroLegosIncorrectos=0
     
     img_org=cv2.imread(img_ubicacion)
     #obtenemos la imagen original y la pasamos a grises
@@ -66,7 +66,7 @@ def Proceso(img_ubicacion, calibrar):
       (cX, cY) = centroids[i]
       print("Label No {}".format(i))
       # Imprimir las medidas, área, centroide del objeto
-      print("Label No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))
+      print("Label No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, w, h, area, int(cX), int(cY)))
       output = img_re.copy()
       cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 0), 3)
       cv2.circle(output, (int(cX), int(cY)), 4, (0, 0, 255), -1)
@@ -74,16 +74,16 @@ def Proceso(img_ubicacion, calibrar):
       cv2.waitKey(0) 
       cv2.destroyAllWindows()
       
-      #Detectamos el punto centro de la pieza
+      #Detectamos el Lego centro de la pieza
       if(i==1):
-          Punto_centro = (int(cX), int(cY))
+          Lego_centro = (int(cX), int(cY))
           
 
-    #Punto centro de la imagen
-    Punto_centro_imagen = img_re.shape[1] // 2, img_re.shape[0] // 2
-    # Coordenada de los centroides de los dos puntos
-    x0, y0 = Punto_centro_imagen
-    x1, y1 = Punto_centro
+    #Lego centro de la imagen
+    Lego_centro_imagen = img_re.shape[1] // 2, img_re.shape[0] // 2
+    # Coordenada de los centroides de los dos Legos
+    x0, y0 = Lego_centro_imagen
+    x1, y1 = Lego_centro
     # Calcular la diferencia de coordenadas
     tx = x0 - x1
     ty = y0 - y1
@@ -97,21 +97,26 @@ def Proceso(img_ubicacion, calibrar):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
     
-    img_gray = cv2.cvtColor(image_translated, cv2.COLOR_BGR2GRAY)
-    # Aplicar umbral para obtener los puntos negros
+    hsv_image = cv2.cvtColor(image_translated, cv2.COLOR_BGR2HSV)
+    # Aplicar umbral para obtener los Legos negros
 
-    ret, thresh = cv2.threshold(img_gray, 25, 255, cv2.THRESH_BINARY_INV)
-    #aplicar operacion morfologica dilate
-    kernel = np.ones((10, 10), np.uint8)
-    threshImg = cv2.dilate(thresh, kernel, iterations=1)
+    lower_black = np.array([0, 0, 0])  # Valor mínimo de H, S y V para negro
+    upper_black = np.array([179, 255, 30])  # Valor máximo de H, S y V para negro
+
+    mask = cv2.inRange(hsv_image, lower_black, upper_black)
+    segmented_image = cv2.bitwise_and(image_translated, image_translated, mask=mask)
     
-    cv2.imshow('Contornos', threshImg)
+    kernel = np.ones((10, 10), np.uint8)
+    segmented_image = cv2.dilate(mask, kernel, iterations=1)
+
+
+    cv2.imshow('Contornos', segmented_image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
     #Aplicamos componentes conectados
     conn = 8
-    output = cv2.connectedComponentsWithStats(threshImg, conn, cv2.CV_32S)
+    output = cv2.connectedComponentsWithStats(segmented_image, conn, cv2.CV_32S)
     (numLabels, labels, stats, centroids) = output
     for i in range(0, numLabels):
     # extract the connected component statistics and centroid for
@@ -123,11 +128,11 @@ def Proceso(img_ubicacion, calibrar):
       area = stats[i, cv2.CC_STAT_AREA]
       (cX, cY) = centroids[i]
     # Imprimir las medidas, área y centroide del objeto
-      print("Label No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))
+      print("Label No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, w, h, area, int(cX), int(cY)))
       #imptimti imagen
       
       
-    #Centroides de los puntos de referencia
+    #Centroides de los Legos de referencia
     centroides = []
     for i in range(0, numLabels):
         # extract the connected component statistics and centroid for
@@ -152,7 +157,7 @@ def Proceso(img_ubicacion, calibrar):
             cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 0), 3)
             cv2.circle(output, (int(cX), int(cY)), 4, (0, 0, 255), -1)
 
-            print("Label No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))
+            print("Label No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, w, h, area, int(cX), int(cY)))
             centroides.append((int(cX), int(cY)))
             
             #Visualizar la imagen
@@ -162,8 +167,8 @@ def Proceso(img_ubicacion, calibrar):
     for centroid in centroides:
         cX, cY = centroid
         print("Coordenadas: cX = {}, cY = {}".format(cX, cY))
-    #Hallar punto de referencia mas cercano a los otros dos
-    punto_cercano = None
+    #Hallar Lego de referencia mas cercano a los otros dos
+    Lego_cercano = None
     distancia_minima = float('inf')
     for i in range(len(centroides)):
         cX1, cY1 = centroides[i]
@@ -174,33 +179,33 @@ def Proceso(img_ubicacion, calibrar):
                 distancia_total += mt.sqrt((cX1 - cX2) ** 2 + (cY1 - cY2) ** 2)
         if distancia_total < distancia_minima:
             distancia_minima = distancia_total
-            punto_cercano = centroides[i]
-    print("El punto más cercano a los otros dos en términos de distancia en ambos ejes es: {}".format(punto_cercano))
-    #Punto esperado es donde deberia estar el punto mas cercano a los otros (esto se calibra manualmente)
-    Punto_esperado= (139,348)
-    # Coordenadas del punto de referencia (Centro de la imagen)
-    x1, y1 = Punto_centro_imagen
-    # Coordenadas del primer punto (punto_cercano)
-    x2, y2 = punto_cercano
-    # Coordenadas del segundo punto (Punto_esperado)
-    x3,y3 = Punto_esperado
-    # Paso 1: Calcular las diferencias en las coordenadas x y y para el primer punto
+            Lego_cercano = centroides[i]
+    print("El Lego más cercano a los otros dos en términos de distancia en ambos ejes es: {}".format(Lego_cercano))
+    #Lego esperado es donde deberia estar el Lego mas cercano a los otros (esto se calibra manualmente)
+    Lego_esperado= (136,347)
+    # Coordenadas del Lego de referencia (Centro de la imagen)
+    x1, y1 = Lego_centro_imagen
+    # Coordenadas del primer Lego (Lego_cercano)
+    x2, y2 = Lego_cercano
+    # Coordenadas del segundo Lego (Lego_esperado)
+    x3,y3 = Lego_esperado
+    # Paso 1: Calcular las diferencias en las coordenadas x y y para el primer Lego
     delta_x1 = x2 - x1
     delta_y1 = y2 - y1
-    # Paso 2: Calcular las diferencias en las coordenadas x y y para el segundo punto
+    # Paso 2: Calcular las diferencias en las coordenadas x y y para el segundo Lego
     delta_x2 = x3 - x1
     delta_y2 = y3 - y1
-    # Paso 3: Calcular el ángulo de rotación para ambos puntos en radianes
+    # Paso 3: Calcular el ángulo de rotación para ambos Legos en radianes
     theta_rad1 = mt.atan2(delta_y1, delta_x1)
     theta_rad2 = mt.atan2(delta_y2, delta_x2)
-    # Paso 4: Calcular la diferencia de ángulos entre los dos puntos
+    # Paso 4: Calcular la diferencia de ángulos entre los dos Legos
     delta_theta_rad =  theta_rad1-theta_rad2
     # Paso 5: Convertir la diferencia de ángulos a grados
     delta_theta_deg = mt.degrees(delta_theta_rad)
     #imprimir el ángulo de rotación
     print("El ángulo de rotación es: {}".format(delta_theta_deg))
     # Obtener la matriz de transformación de rotación
-    rotation_matrix = cv2.getRotationMatrix2D(Punto_centro_imagen, delta_theta_deg, 1.0)
+    rotation_matrix = cv2.getRotationMatrix2D(Lego_centro_imagen, delta_theta_deg, 1.0)
     # Aplicar la matriz de transformación a la imagen
     rotated_image = cv2.warpAffine(image_translated.copy(), rotation_matrix, (image_translated.copy().shape[1], image_translated.copy().shape[0]))
     cv2.imshow('Imagen rotada', rotated_image)
@@ -213,9 +218,6 @@ def Proceso(img_ubicacion, calibrar):
         global LyA_rojos_Original
         global LyA_azules_Original
         global LyA_Amarillos_Original
-        global LyA_rojos
-        global LyA_Azules
-        global LyA_Amarillos
     
         centroide_rojos_Original=[]
         centroide_azules_Original=[]
@@ -223,19 +225,18 @@ def Proceso(img_ubicacion, calibrar):
         LyA_rojos_Original=[]
         LyA_azules_Original=[]
         LyA_Amarillos_Original=[]
-        LyA_rojos=[]
-        LyA_Azules=[]
-        LyA_Amarillos=[]
-    
+        
+    LyA_rojos=[]
+    LyA_Azules=[]
+    LyA_Amarillos=[]
+        
     # Convertir la imagen a espacio de color HSV
     hsv_image = cv2.cvtColor(rotated_image, cv2.COLOR_BGR2HSV)
     # Definir el rango de colores a detectar (en este caso, color rojo)
-    lower_red = np.array([0, 40, 40])  # Valor mínimo de H, S y V para rojo
+    lower_red = np.array([0, 50, 50])  # Valor mínimo de H, S y V para rojo
     upper_red = np.array([10, 255, 255])  # Valor máximo de H, S y V para rojo
     # Crear una máscara que filtre los píxeles dentro del rango de colores definido
     mask = cv2.inRange(hsv_image, lower_red, upper_red)
-    # Aplicar la máscara a la imagen original para obtener la imagen segmentada
-    segmented_image = cv2.bitwise_and(rotated_image, rotated_image, mask=mask)
     # Crear una máscara que filtre los píxeles dentro del rango de colores definido
     mask = cv2.inRange(hsv_image, lower_red, upper_red)
     # Aplicar filtro de dilatación a la máscara
@@ -274,20 +275,20 @@ def Proceso(img_ubicacion, calibrar):
     #Guardamos algunas variables de los objetos encontrados en los array
       xwyh_Rojos.append((x+w, y+h))
       xy_Rojos.append((x, y))
-      LyA_rojos.append((max(w, h), min(w, h)))
+      LyA_rojos.append(((w,h)))
       centroides_rojos.append((int(cX),int(cY)))
       
     # Imprimir las medidas y área del objeto
       if(i>0):
-        print("Punto Rojo No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))  
+        print("Lego Rojo No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, w, h, area, int(cX), int(cY)))  
         if calibrar==True:
             centroide_rojos_Original.append((int(cX),int(cY)))
-            LyA_rojos_Original.append((max(w, h), min(w, h)))
-    # Contar la cantidad de contornos encontrados (que representan los puntos rojos)(Se resta 1 para elimnar el fondo encontrado)
-    cantidad_puntos = numLabels-1 
-    # Mostrar la cantidad de puntos detectados
-    print("Cantidad de puntos rojos detectados:", cantidad_puntos)
-    NumeroPuntosIncorrectos+=cantidad_puntos
+            LyA_rojos_Original.append(((w,h)))
+    # Contar la cantidad de contornos encontrados (que representan los Legos rojos)(Se resta 1 para elimnar el fondo encontrado)
+    cantidad_Legos = numLabels-1 
+    # Mostrar la cantidad de Legos detectados
+    print("Cantidad de Legos rojos detectados:", cantidad_Legos)
+    NumeroLegosIncorrectos+=cantidad_Legos
     print(centroide_rojos_Original)
     
     
@@ -335,18 +336,18 @@ def Proceso(img_ubicacion, calibrar):
       xwyh_Azules.append((x+w, y+h))
       xy_Azules.append((x, y))
       centroides_azules.append((int(cX),int(cY)))
-      LyA_Azules.append((max(w, h), min(w, h)))
+      LyA_Azules.append(((w,h)))
       
     # Imprimir las medidas y área del objeto menos la del fondo
       if(i>0):
-        print("Punto Azul No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))
+        print("Lego Azul No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, w, h, area, int(cX), int(cY)))
         if calibrar==True:
             centroide_azules_Original.append((int(cX),int(cY)))
-            LyA_azules_Original.append((max(w, h), min(w, h)))
-    cantidad_puntos = numLabels-1
-    # Mostrar la cantidad de puntos detectados
-    print("Cantidad de puntos Azules detectados:", cantidad_puntos)
-    NumeroPuntosIncorrectos+=cantidad_puntos
+            LyA_azules_Original.append((w, h))
+    cantidad_Legos = numLabels-1
+    # Mostrar la cantidad de Legos detectados
+    print("Cantidad de Legos Azules detectados:", cantidad_Legos)
+    NumeroLegosIncorrectos+=cantidad_Legos
     
     # Definir el rango de colores a detectar (en este caso, color Amarillo)
     lower_green = np.array([20, 100, 100])  # Valor mínimo de H, S y V para Amarillo
@@ -393,29 +394,31 @@ def Proceso(img_ubicacion, calibrar):
       xwyh_Amarillos.append((x+w,y+h))
       xy_Amarillos.append((x, y))
       centroides_Amarillos.append((int(cX),int(cY)))
-      LyA_Amarillos.append((max(w, h), min(w, h)))
+      LyA_Amarillos.append((w, h))
       
     # Imprimir las medidas, área y centroide del objeto menos la del fondo
       if(i>0):
-          print("Punto Amarillo No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))
+          print("Lego Amarillo No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, w, h, area, int(cX), int(cY)))
           if calibrar==True:
             centroide_Amarillos_Original.append((int(cX),int(cY)))
-            LyA_Amarillos_Original.append((max(w, h), min(w, h)))
-    # Contar la cantidad de contornos encontrados (que representan los puntos Amarillos)(Se resta 1 para elimnar el fondo encontrado)
-    cantidad_puntos = numLabels-1
-    # Mostrar la cantidad de puntos detectados
-    print("Cantidad de puntos Amarillos detectados:", cantidad_puntos)
-    NumeroPuntosIncorrectos+=cantidad_puntos
+            LyA_Amarillos_Original.append((w,h))
+    # Contar la cantidad de contornos encontrados (que representan los Legos Amarillos)(Se resta 1 para elimnar el fondo encontrado)
+    cantidad_Legos = numLabels-1
+    # Mostrar la cantidad de Legos detectados
+    print("Cantidad de Legos Amarillos detectados:", cantidad_Legos)
+    NumeroLegosIncorrectos+=cantidad_Legos
     
-
-    #La tolerancia es la distancia máxima que se permite entre dos puntos para considerarlos iguales, Esto se necesita porque la rotacion puede darnos 1 o 2 pixeles de diferencia en coordenadas en diferentes casos
-    tolerancia=20
+    #La tolerancia es la distancia máxima que se permite entre dos Legos para considerarlos iguales, Esto se necesita porque la rotacion puede darnos 1 o 2 pixeles de diferencia en coordenadas en diferentes casos
+    tolerancia=15
     def comparar_coordenadas(coord1, coord2):
+        print(coord1, coord2)
         dif_x = abs(coord1[0] - coord2[0])
         dif_y = abs(coord1[1] - coord2[1])
         if dif_x <= tolerancia and dif_y <= tolerancia:
+            print("True")
             return True
         else:
+            print("False")
             return False
         
     #Comparar largo y alto
@@ -423,9 +426,25 @@ def Proceso(img_ubicacion, calibrar):
         print(LyA1, LyA2)
         dif_L = abs(LyA1[0] - LyA2[0])
         dif_A = abs(LyA1[1] - LyA2[1])
-        if dif_L <= tolerancia and dif_A <= tolerancia:
+        if dif_L <= 5 and dif_A <= 5:
             print("True")
             return True
+        elif dif_L <= tolerancia and dif_A <= tolerancia:
+            #comprar si los dos tinen el mismo lado de mayor longitud
+            if LyA1[0]>LyA1[1]:
+                if LyA2[0]>LyA2[1]:
+                    print("True")
+                    return True
+                else:
+                    print("False")
+                    return False
+            elif LyA1[0]<LyA1[1]:
+                if LyA2[0]<LyA2[1]:
+                    print("True")
+                    return True
+                else:
+                    print("False")
+                    return False
         else:
             print("False")
             return False
@@ -443,7 +462,7 @@ def Proceso(img_ubicacion, calibrar):
             if comparar_coordenadas(centroides_rojos[i], centroide_rojo_Original):
                 if comparar_LyA(LyA_rojos_Original[ubicacion], LyA_rojos[i]):
                     cv2.rectangle(output, xy_Rojos[i], xwyh_Rojos[i], (0, 255, 0), 3)
-                    NumeroPuntosRojos+=1
+                    NumeroLegosRojos+=1
                     break
                 else:
                     cv2.rectangle(output, xy_Rojos[i], xwyh_Rojos[i], (0, 0, 255), 3)
@@ -459,7 +478,7 @@ def Proceso(img_ubicacion, calibrar):
             if comparar_coordenadas(centroides_azules[i], centroide_azul_Original):
                 if comparar_LyA(LyA_azules_Original[ubicacion], LyA_Azules[i]):
                     cv2.rectangle(output, xy_Azules[i], xwyh_Azules[i], (0, 255, 0), 3)
-                    NumeroPuntosAzules+=1
+                    NumeroLegosAzules+=1
                     break
                 else:
                     cv2.rectangle(output, xy_Azules[i], xwyh_Azules[i], (0, 0, 255), 3)
@@ -475,7 +494,7 @@ def Proceso(img_ubicacion, calibrar):
             if comparar_coordenadas(centroides_Amarillos[i], centroide_Amarillo_Original):
                 if comparar_LyA(LyA_Amarillos_Original[ubicacion], LyA_Amarillos[i]):
                     cv2.rectangle(output, xy_Amarillos[i], xwyh_Amarillos[i], (0, 255, 0), 3)
-                    NumeroPuntosAmarillos+=1
+                    NumeroLegosAmarillos+=1
                     break
                 else:
                     cv2.rectangle(output, xy_Amarillos[i], xwyh_Amarillos[i], (0, 0, 255), 3)
@@ -483,14 +502,14 @@ def Proceso(img_ubicacion, calibrar):
             else:
                 cv2.rectangle(output, xy_Amarillos[i], xwyh_Amarillos[i], (0, 0, 255), 3)
                 
-    NumeroPuntosIncorrectos=NumeroPuntosIncorrectos-NumeroPuntosRojos-NumeroPuntosAzules-NumeroPuntosAmarillos 
+    NumeroLegosIncorrectos=NumeroLegosIncorrectos-NumeroLegosRojos-NumeroLegosAzules-NumeroLegosAmarillos 
     print(LyA_rojos_Original, LyA_azules_Original, LyA_Amarillos_Original)
     #Mostrar la imagen final
     cv2.imshow("Final",output)
     cv2.imwrite("output/output.jpg", output)
     # Esperar a que se presione una tecla y cerrar las ventanas 
     cv2.waitKey(0)
-    #cv2.destroyAllWindows()
+    cv2.destroyAllWindows()
 
 ProgramaCalibrado=False
 # Crea una ventana principal
@@ -513,7 +532,7 @@ image_list = []
 for image_name in image_names:
     image_path = os.path.join(image_folder, image_name)
     img = Image.open(image_path)
-    img = img.resize((200, 400), Image.ANTIALIAS)
+    img = img.resize((400, 400), Image.ANTIALIAS)
     photo = ImageTk.PhotoImage(img)
     image_list.append(photo)
     
@@ -533,8 +552,6 @@ previous_button = Button(root, text="Anterior", command=lambda: change_image(-1)
 previous_button.pack(side=LEFT, padx=20)
 next_button = Button(root, text="Siguiente", command=lambda: change_image(1))
 next_button.pack(side=LEFT,padx=20)
-
-
 
 # Muestra la primera imagen en el widget de lienzo
 label1 = Label(canvas)
@@ -605,16 +622,16 @@ def my_function(image_path, calibrar):
     global imagen2_tk
     
     img2 = Image.open("output/output.jpg")
-    img2 = img2.resize((200, 400), Image.LANCZOS)
+    img2 = img2.resize((400, 400), Image.LANCZOS)
     photo2 = ImageTk.PhotoImage(img2)
     imagen2_tk = photo2
     label2.config(image=imagen2_tk)
     
-    texto1.configure(text="Amarillo: "+str(NumeroPuntosAmarillos) +"/"+str(len(centroide_Amarillos_Original)))
-    texto2.configure(text="Azul: "+str(NumeroPuntosAzules)+"/"+str(len(centroide_azules_Original)))
-    texto3.configure(text="Rojo: "+str(NumeroPuntosRojos)+"/"+str(len(centroide_rojos_Original)))
-    texto4.configure(text="Lugar Incorrecto: "+str(NumeroPuntosIncorrectos))
-    if (NumeroPuntosIncorrectos==0 and (NumeroPuntosAmarillos+NumeroPuntosAzules+NumeroPuntosRojos)==(len(centroide_rojos_Original)+len(centroide_azules_Original)+len(centroide_Amarillos_Original))):
+    texto1.configure(text="Amarillo: "+str(NumeroLegosAmarillos) +"/"+str(len(centroide_Amarillos_Original)))
+    texto2.configure(text="Azul: "+str(NumeroLegosAzules)+"/"+str(len(centroide_azules_Original)))
+    texto3.configure(text="Rojo: "+str(NumeroLegosRojos)+"/"+str(len(centroide_rojos_Original)))
+    texto4.configure(text="Lugar Incorrecto: "+str(NumeroLegosIncorrectos))
+    if (NumeroLegosIncorrectos==0 and (NumeroLegosAmarillos+NumeroLegosAzules+NumeroLegosRojos)==(len(centroide_rojos_Original)+len(centroide_azules_Original)+len(centroide_Amarillos_Original))):
         texto5.configure(text="Estado: Aprobado")
     else:
         texto5.configure(text="Estado: No Aprobado")
