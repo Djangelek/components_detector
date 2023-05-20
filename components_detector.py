@@ -34,9 +34,9 @@ def ResizeWithAspectRatio(image, width=None, height=None, inter=cv2.INTER_AREA):
 
 
 def Proceso(img_ubicacion, calibrar):
-    global output, NumeroPuntosVerdes, NumeroPuntosAzules, NumeroPuntosRojos
+    global output, NumeroPuntosAmarillos, NumeroPuntosAzules, NumeroPuntosRojos
     global NumeroPuntosIncorrectos
-    NumeroPuntosVerdes=0
+    NumeroPuntosAmarillos=0
     NumeroPuntosAzules=0
     NumeroPuntosRojos=0
     NumeroPuntosIncorrectos=0
@@ -47,11 +47,15 @@ def Proceso(img_ubicacion, calibrar):
     img_gray = cv2.cvtColor(img_re, cv2.COLOR_BGR2GRAY)
     #hacemos un threshold
     (T, threshImg) = cv2.threshold(img_gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+    cv2.imshow(" ",threshImg)
+    cv2.waitKey(0) 
+    cv2.destroyAllWindows()
+    
     #Aplicamos componentes conectados
     conn = 4
     output = cv2.connectedComponentsWithStats(threshImg, conn, cv2.CV_32S)
     (numLabels, labels, stats, centroids) = output
-    for i in range(0, numLabels):
+    for i in range(0, 2):
     # extract the connected component statistics and centroid for
     # the current label
       x = stats[i, cv2.CC_STAT_LEFT]
@@ -63,9 +67,18 @@ def Proceso(img_ubicacion, calibrar):
       print("Label No {}".format(i))
       # Imprimir las medidas, área, centroide del objeto
       print("Label No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))
+      output = img_re.copy()
+      cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 0), 3)
+      cv2.circle(output, (int(cX), int(cY)), 4, (0, 0, 255), -1)
+      cv2.imshow(" ",output)
+      cv2.waitKey(0) 
+      cv2.destroyAllWindows()
+      
       #Detectamos el punto centro de la pieza
       if(i==1):
           Punto_centro = (int(cX), int(cY))
+          
+
     #Punto centro de la imagen
     Punto_centro_imagen = img_re.shape[1] // 2, img_re.shape[0] // 2
     # Coordenada de los centroides de los dos puntos
@@ -78,12 +91,26 @@ def Proceso(img_ubicacion, calibrar):
     translation_matrix = np.float32([[1, 0, tx], [0, 1, ty]])
     # Aplicar la traslación a la imagen
     image_translated = cv2.warpAffine(img_re, translation_matrix, (img_re.shape[1], img_re.shape[0]))
-    #obtenemos la imagen Trasladada y la pasamos a grises
+    
+    #Ver imagen trasladada
+    cv2.imshow(" ",image_translated)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    
     img_gray = cv2.cvtColor(image_translated, cv2.COLOR_BGR2GRAY)
-    #hacemos un threshold
-    (T, threshImg) = cv2.threshold(img_gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+    # Aplicar umbral para obtener los puntos negros
+
+    ret, thresh = cv2.threshold(img_gray, 25, 255, cv2.THRESH_BINARY_INV)
+    #aplicar operacion morfologica dilate
+    kernel = np.ones((10, 10), np.uint8)
+    threshImg = cv2.dilate(thresh, kernel, iterations=1)
+    
+    cv2.imshow('Contornos', threshImg)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
     #Aplicamos componentes conectados
-    conn = 4
+    conn = 8
     output = cv2.connectedComponentsWithStats(threshImg, conn, cv2.CV_32S)
     (numLabels, labels, stats, centroids) = output
     for i in range(0, numLabels):
@@ -97,9 +124,12 @@ def Proceso(img_ubicacion, calibrar):
       (cX, cY) = centroids[i]
     # Imprimir las medidas, área y centroide del objeto
       print("Label No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))
+      #imptimti imagen
+      
+      
     #Centroides de los puntos de referencia
     centroides = []
-    for i in range(1, numLabels):
+    for i in range(0, numLabels):
         # extract the connected component statistics and centroid for
         # the current label
         x = stats[i, cv2.CC_STAT_LEFT]
@@ -110,9 +140,9 @@ def Proceso(img_ubicacion, calibrar):
         (cX, cY) = centroids[i]
         # ensure the width, height, and area are all neither too small
         # nor too big
-        keepWidth = w > 45 and w < 60
-        keepHeight = h > 45 and h < 60
-        keepArea = area > 1500 and area < 2000
+        keepWidth = w > 10 and w < 30
+        keepHeight = h > 10 and h < 30
+        keepArea = area > 100 and area < 700
         # ensure the connected component we are examining passes all
         # three tests
         if all((keepWidth, keepHeight, keepArea)):
@@ -147,7 +177,7 @@ def Proceso(img_ubicacion, calibrar):
             punto_cercano = centroides[i]
     print("El punto más cercano a los otros dos en términos de distancia en ambos ejes es: {}".format(punto_cercano))
     #Punto esperado es donde deberia estar el punto mas cercano a los otros (esto se calibra manualmente)
-    Punto_esperado= (170,546)
+    Punto_esperado= (139,348)
     # Coordenadas del punto de referencia (Centro de la imagen)
     x1, y1 = Punto_centro_imagen
     # Coordenadas del primer punto (punto_cercano)
@@ -179,23 +209,23 @@ def Proceso(img_ubicacion, calibrar):
     if(calibrar==True):
         global centroide_rojos_Original
         global centroide_azules_Original
-        global centroide_verdes_Original
+        global centroide_Amarillos_Original
         global LyA_rojos_Original
         global LyA_azules_Original
-        global LyA_verdes_Original
+        global LyA_Amarillos_Original
         global LyA_rojos
         global LyA_Azules
-        global LyA_Verdes
+        global LyA_Amarillos
     
         centroide_rojos_Original=[]
         centroide_azules_Original=[]
-        centroide_verdes_Original=[]
+        centroide_Amarillos_Original=[]
         LyA_rojos_Original=[]
         LyA_azules_Original=[]
-        LyA_verdes_Original=[]
+        LyA_Amarillos_Original=[]
         LyA_rojos=[]
         LyA_Azules=[]
-        LyA_Verdes=[]
+        LyA_Amarillos=[]
     
     # Convertir la imagen a espacio de color HSV
     hsv_image = cv2.cvtColor(rotated_image, cv2.COLOR_BGR2HSV)
@@ -214,12 +244,22 @@ def Proceso(img_ubicacion, calibrar):
     # Mostrar la imagen original y la imagen segmentada
     cv2.imshow('Imagen Segmentada ROJO', dilated_mask)
     cv2.waitKey(0)
-    #cv2.destroyAllWindows()
+    cv2.destroyAllWindows()
+    
+    kernel = np.ones((10, 10), np.uint8)
+    apertura = cv2.morphologyEx(dilated_mask, cv2.MORPH_OPEN, kernel)
+    cv2.imshow('Imagen Segmentada Roja', apertura)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    
+    
+    
+    
     # Hacemos un threshold
-    (T, threshImg) = cv2.threshold(dilated_mask, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+    (T, threshImg) = cv2.threshold(apertura, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
     # Aplicamos componentes conectados
     conn = 4
-    output = cv2.connectedComponentsWithStats(dilated_mask, conn, cv2.CV_32S)
+    output = cv2.connectedComponentsWithStats(apertura, conn, cv2.CV_32S)
     (numLabels, labels, stats, centroids) = output
 
     xwyh_Rojos = []
@@ -269,12 +309,18 @@ def Proceso(img_ubicacion, calibrar):
     # Mostrar la imagen original y la imagen segmentada
     cv2.imshow('Imagen Segmentada Azul', dilated_mask)
     cv2.waitKey(0)
-    #cv2.destroyAllWindows()
+    cv2.destroyAllWindows()
+    
+    kernel = np.ones((10, 10), np.uint8)
+    apertura = cv2.morphologyEx(dilated_mask, cv2.MORPH_OPEN, kernel)
+    cv2.imshow('Imagen Segmentada Azul', apertura)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
     # Hacemos un threshold
-    (T, threshImg) = cv2.threshold(dilated_mask, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+    (T, threshImg) = cv2.threshold(apertura, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
     # Aplicamos componentes conectados
     conn = 4
-    output = cv2.connectedComponentsWithStats(dilated_mask, conn, cv2.CV_32S)
+    output = cv2.connectedComponentsWithStats(apertura, conn, cv2.CV_32S)
     (numLabels, labels, stats, centroids) = output
     xwyh_Azules = []
     xy_Azules=[]
@@ -304,9 +350,10 @@ def Proceso(img_ubicacion, calibrar):
     # Mostrar la cantidad de puntos detectados
     print("Cantidad de puntos Azules detectados:", cantidad_puntos)
     NumeroPuntosIncorrectos+=cantidad_puntos
-    # Definir el rango de colores a detectar (en este caso, color verde)
-    lower_green = np.array([40, 40, 40])  # Valor mínimo de H, S y V para verde
-    upper_green = np.array([70, 255, 255])  # Valor máximo de H, S y V para verde
+    
+    # Definir el rango de colores a detectar (en este caso, color Amarillo)
+    lower_green = np.array([20, 100, 100])  # Valor mínimo de H, S y V para Amarillo
+    upper_green = np.array([25, 255, 255])  # Valor máximo de H, S y V para Amarillo
     # Crear una máscara que filtre los píxeles dentro del rango de colores definido
     mask = cv2.inRange(hsv_image, lower_green, upper_green)
     # Aplicar la máscara a la imagen original para obtener la imagen segmentada
@@ -317,18 +364,25 @@ def Proceso(img_ubicacion, calibrar):
     kernel = np.ones((5, 5), np.uint8)
     dilated_mask = cv2.dilate(mask, kernel, iterations=1)
     # Mostrar la imagen original y la imagen segmentada
-    cv2.imshow('Imagen Segmentada VERDE', dilated_mask)
+    cv2.imshow('Imagen Segmentada Amarillo', dilated_mask)
     cv2.waitKey(0)
-    #cv2.destroyAllWindows()
+    cv2.destroyAllWindows()
+    #Aplicar filtro 
+    kernel = np.ones((10, 10), np.uint8)
+    apertura = cv2.morphologyEx(dilated_mask, cv2.MORPH_OPEN, kernel)
+    cv2.imshow('Imagen Segmentada Amarillo', apertura)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    
     # Hacemos un threshold
-    (T, threshImg) = cv2.threshold(dilated_mask, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+    (T, threshImg) = cv2.threshold(apertura, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
     # Aplicamos componentes conectados
     conn = 4
-    output = cv2.connectedComponentsWithStats(dilated_mask, conn, cv2.CV_32S)
+    output = cv2.connectedComponentsWithStats(apertura, conn, cv2.CV_32S)
     (numLabels, labels, stats, centroids) = output
-    xwyh_verdes = []
-    xy_Verdes=[]
-    centroides_verdes = []
+    xwyh_Amarillos = []
+    xy_Amarillos=[]
+    centroides_Amarillos = []
     for i in range(0, numLabels):
     # extract the connected component statistics and centroid for
     # the current label
@@ -339,26 +393,26 @@ def Proceso(img_ubicacion, calibrar):
       area = stats[i, cv2.CC_STAT_AREA]
       (cX, cY) = centroids[i]
     #Guardamos algunas variables de los objetos encontrados en los array
-      xwyh_verdes.append((x+w,y+h))
-      xy_Verdes.append((x, y))
-      centroides_verdes.append((int(cX),int(cY)))
-      LyA_Verdes.append((max(w, h), min(w, h)))
+      xwyh_Amarillos.append((x+w,y+h))
+      xy_Amarillos.append((x, y))
+      centroides_Amarillos.append((int(cX),int(cY)))
+      LyA_Amarillos.append((max(w, h), min(w, h)))
       
     # Imprimir las medidas, área y centroide del objeto menos la del fondo
       if(i>0):
-          print("Punto Verde No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))
+          print("Punto Amarillo No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, max(w, h), min(w, h), area, int(cX), int(cY)))
           if calibrar==True:
-            centroide_verdes_Original.append((int(cX),int(cY)))
-            LyA_verdes_Original.append((max(w, h), min(w, h)))
-    # Contar la cantidad de contornos encontrados (que representan los puntos verdes)(Se resta 1 para elimnar el fondo encontrado)
+            centroide_Amarillos_Original.append((int(cX),int(cY)))
+            LyA_Amarillos_Original.append((max(w, h), min(w, h)))
+    # Contar la cantidad de contornos encontrados (que representan los puntos Amarillos)(Se resta 1 para elimnar el fondo encontrado)
     cantidad_puntos = numLabels-1
     # Mostrar la cantidad de puntos detectados
-    print("Cantidad de puntos verdes detectados:", cantidad_puntos)
+    print("Cantidad de puntos Amarillos detectados:", cantidad_puntos)
     NumeroPuntosIncorrectos+=cantidad_puntos
     
 
     #La tolerancia es la distancia máxima que se permite entre dos puntos para considerarlos iguales, Esto se necesita porque la rotacion puede darnos 1 o 2 pixeles de diferencia en coordenadas en diferentes casos
-    tolerancia=2
+    tolerancia=20
     def comparar_coordenadas(coord1, coord2):
         dif_x = abs(coord1[0] - coord2[0])
         dif_y = abs(coord1[1] - coord2[1])
@@ -382,7 +436,7 @@ def Proceso(img_ubicacion, calibrar):
 
     output = rotated_image.copy()
     
-    print(centroide_azules_Original, centroide_verdes_Original, centroide_rojos_Original)
+    print(centroide_azules_Original, centroide_Amarillos_Original, centroide_rojos_Original)
       
     
     #Aplicar funcion comparar_coordenadas para cada centroide rojo con cada centroide_rojos_Original
@@ -416,24 +470,24 @@ def Proceso(img_ubicacion, calibrar):
             else:
                 cv2.rectangle(output, xy_Azules[i], xwyh_Azules[i], (0, 0, 255), 3)
                 
-    #Recorrer los centroides verdes
-    #aplicar funcion comparar_coordenadas para cada centroide verde con cada centroide_verdes_Original
-    for i in range(1,len(centroides_verdes)):
-        for centroide_verde_Original in centroide_verdes_Original:
-            ubicacion=centroide_verdes_Original.index(centroide_verde_Original)
-            if comparar_coordenadas(centroides_verdes[i], centroide_verde_Original):
-                if comparar_LyA(LyA_verdes_Original[ubicacion], LyA_Verdes[i]):
-                    cv2.rectangle(output, xy_Verdes[i], xwyh_verdes[i], (0, 255, 0), 3)
-                    NumeroPuntosVerdes+=1
+    #Recorrer los centroides Amarillos
+    #aplicar funcion comparar_coordenadas para cada centroide Amarillo con cada centroide_Amarillos_Original
+    for i in range(1,len(centroides_Amarillos)):
+        for centroide_Amarillo_Original in centroide_Amarillos_Original:
+            ubicacion=centroide_Amarillos_Original.index(centroide_Amarillo_Original)
+            if comparar_coordenadas(centroides_Amarillos[i], centroide_Amarillo_Original):
+                if comparar_LyA(LyA_Amarillos_Original[ubicacion], LyA_Amarillos[i]):
+                    cv2.rectangle(output, xy_Amarillos[i], xwyh_Amarillos[i], (0, 255, 0), 3)
+                    NumeroPuntosAmarillos+=1
                     break
                 else:
-                    cv2.rectangle(output, xy_Verdes[i], xwyh_verdes[i], (0, 0, 255), 3)
+                    cv2.rectangle(output, xy_Amarillos[i], xwyh_Amarillos[i], (0, 0, 255), 3)
                     break
             else:
-                cv2.rectangle(output, xy_Verdes[i], xwyh_verdes[i], (0, 0, 255), 3)
+                cv2.rectangle(output, xy_Amarillos[i], xwyh_Amarillos[i], (0, 0, 255), 3)
                 
-    NumeroPuntosIncorrectos=NumeroPuntosIncorrectos-NumeroPuntosRojos-NumeroPuntosAzules-NumeroPuntosVerdes 
-    print(LyA_rojos_Original, LyA_azules_Original, LyA_verdes_Original)
+    NumeroPuntosIncorrectos=NumeroPuntosIncorrectos-NumeroPuntosRojos-NumeroPuntosAzules-NumeroPuntosAmarillos 
+    print(LyA_rojos_Original, LyA_azules_Original, LyA_Amarillos_Original)
     #Mostrar la imagen final
     cv2.imshow("Final",output)
     cv2.imwrite("output/output.jpg", output)
@@ -466,7 +520,7 @@ for image_name in image_names:
     photo = ImageTk.PhotoImage(img)
     image_list.append(photo)
     
-texto1 = Label(text="Verde: 0/0 ")
+texto1 = Label(text="Amarillo: 0/0 ")
 texto1.pack()
 texto2 = Label(text="Azul: 0/0 ")
 texto2.pack()
@@ -559,11 +613,11 @@ def my_function(image_path, calibrar):
     imagen2_tk = photo2
     label2.config(image=imagen2_tk)
     
-    texto1.configure(text="Verde: "+str(NumeroPuntosVerdes) +"/"+str(len(centroide_verdes_Original)))
+    texto1.configure(text="Amarillo: "+str(NumeroPuntosAmarillos) +"/"+str(len(centroide_Amarillos_Original)))
     texto2.configure(text="Azul: "+str(NumeroPuntosAzules)+"/"+str(len(centroide_azules_Original)))
     texto3.configure(text="Rojo: "+str(NumeroPuntosRojos)+"/"+str(len(centroide_rojos_Original)))
     texto4.configure(text="Lugar Incorrecto: "+str(NumeroPuntosIncorrectos))
-    if (NumeroPuntosIncorrectos==0 and (NumeroPuntosVerdes+NumeroPuntosAzules+NumeroPuntosRojos)==(len(centroide_rojos_Original)+len(centroide_azules_Original)+len(centroide_verdes_Original))):
+    if (NumeroPuntosIncorrectos==0 and (NumeroPuntosAmarillos+NumeroPuntosAzules+NumeroPuntosRojos)==(len(centroide_rojos_Original)+len(centroide_azules_Original)+len(centroide_Amarillos_Original))):
         texto5.configure(text="Estado: Aprobado")
     else:
         texto5.configure(text="Estado: No Aprobado")
