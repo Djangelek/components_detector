@@ -514,11 +514,34 @@ def Proceso(img_ubicacion, calibrar):
 ProgramaCalibrado=False
 # Crea una ventana principal
 root = Tk()
+root.maxsize(750, 700) 
+root.configure(background="#7cbc9a")
 root.title("Mostrar imágenes")
+#  Obtenemos el largo y  ancho de la pantalla
+wtotal = root.winfo_screenwidth()
+htotal = root.winfo_screenheight()
+#  Guardamos el largo y alto de la ventana
+wventana = 750
+hventana = 700
 
-# Crea un widget de lienzo
-canvas = Canvas(root, width=800, height=800)
-canvas.pack()
+#  Aplicamos la siguiente formula para calcular donde debería posicionarse
+pwidth = round(wtotal/2-wventana/2)
+pheight = round(htotal/2-hventana/2)
+
+#  Se lo aplicamos a la geometría de la ventana
+root.geometry(str(wventana)+"x"+str(hventana)+"+"+str(pwidth)+"+"+str(pheight))
+title_frame = Frame(root)
+title_frame.grid(row=0, column=0,columnspan=2, padx=10, pady=5)
+#añadimos titulo
+label = Label(title_frame, text="Inspector De Posicionamiento De Componentes")
+label.pack()
+label.config(fg="#fff",font=("Impact",24),background="#7cbc9a")
+#Crea un widget de lienzo
+canvas = Canvas(root, width=500, height=500)
+canvas.grid(row=1, column=1, padx=10, pady=5)
+
+left_frame = Frame(root,width=800, height=300)
+left_frame.grid(row=1, column=0, padx=10, pady=5)
 
 # Accede a la carpeta de imágenes y guarda los nombres de los archivos en una lista
 image_folder = "images"
@@ -532,37 +555,48 @@ image_list = []
 for image_name in image_names:
     image_path = os.path.join(image_folder, image_name)
     img = Image.open(image_path)
-    img = img.resize((400, 400), Image.ANTIALIAS)
+    img = img.resize((200, 200), Image.ANTIALIAS)
     photo = ImageTk.PhotoImage(img)
     image_list.append(photo)
-    
-texto1 = Label(text="Amarillo: 0/0 ")
+
+
+texto1 = Label(left_frame,text="Amarillo: 0/0 ", font=("Trebuchet",12 ))
 texto1.pack()
-texto2 = Label(text="Azul: 0/0 ")
+texto2 = Label(left_frame,text="Azul: 0/0 ", font=("Trebuchet",12 ))
 texto2.pack()
-texto3 = Label(text="Rojo: 0/0")
+texto3 = Label(left_frame,text="Rojo: 0/0", font=("Trebuchet",12 ))
 texto3.pack()
-texto4 = Label(text="Lugar incorrecto: 0")
+texto4 = Label(left_frame,text="Lugar incorrecto: 0", font=("Trebuchet",12 ))
 texto4.pack()
-texto5 = Label(text="Estado: No calibrado ")
+texto5 = Label(left_frame,text="Estado: No calibrado ", font=("Trebuchet",12))
 texto5.pack()
 
 # Crea dos botones para navegar por las imágenes
-previous_button = Button(root, text="Anterior", command=lambda: change_image(-1))
-previous_button.pack(side=LEFT, padx=20)
-next_button = Button(root, text="Siguiente", command=lambda: change_image(1))
-next_button.pack(side=LEFT,padx=20)
+ratio = 1/8
+previous_image = PhotoImage(file = r"layout\previous.png")
+previous_button = Button(root, text="   Anterior", image = previous_image, compound = LEFT, background="#ed6d4a", foreground="#fff",command=lambda: change_image(-1))
+previous_button.place(relx =ratio, rely = 0.85, width=100,anchor='c')
+# Creating a photoimage object to use image
+next_image = PhotoImage(file = r"layout\next.png")
+next_button = Button(root, text="Siguiente   ", image = next_image, compound = RIGHT, background="#3fd97f", foreground="#fff",command=lambda: change_image(1))
+next_button.place(relx =ratio*7, rely = 0.85, width=100,anchor='c')
 
 # Muestra la primera imagen en el widget de lienzo
-label1 = Label(canvas)
+label1 = Label(left_frame)
 label1.pack(side='left')
 imagen1_tk = image_list[current_image]
 label1.config(image=imagen1_tk)
 
 label2 = Label(canvas)
-label2.pack(side='right')
-imagen2_tk = image_list[current_image]
-label2.config(image=imagen2_tk)
+img = Image.open("images/"+image_names[0])
+img = img.resize((500, 500), Image.ANTIALIAS)
+photo = ImageTk.PhotoImage(img)
+label2.config(image=photo)
+label2.pack()
+# label2 = Label(canvas)
+# label2.pack(side='right')
+# imagen2_tk = image_list[current_image]
+# label2.config(image=imagen2_tk)
 
 # Crea un tercer botón para guardar la dirección de la imagen actual y ejecutar una función
 def save_and_execute():
@@ -582,12 +616,12 @@ def calibrarPrograma():
     global ProgramaCalibrado
     ProgramaCalibrado=True
     
-
-save_button = Button(root, text="Ejecutar", command=save_and_execute)
-save_button.pack(side=LEFT, padx=20)
-
-calibrar_button = Button(root, text="Calibrar", command=calibrarPrograma)
-calibrar_button.pack(side=LEFT, padx=20)
+execute_image = PhotoImage(file = r"layout\execute.png")
+save_button = Button(root, text="Ejecutar   ", image =execute_image, compound = RIGHT, background="#23998e", foreground="#fff", command=save_and_execute)
+save_button.place(relx =ratio*5, rely = 0.9, width=100, height=40,anchor='c')
+calibrate_image = PhotoImage(file = r"layout\calibrate.png")
+calibrar_button = Button(root, text="Calibrar   ", image =calibrate_image, compound = RIGHT, background="#c46564", foreground="#fff",command=calibrarPrograma)
+calibrar_button.place(relx =ratio*3, rely = 0.9, width=100, height=40,anchor='c')
 
 # Función para cambiar la imagen actual y mostrarla en el widget de lienzo
 def change_image(direction):
@@ -622,7 +656,7 @@ def my_function(image_path, calibrar):
     global imagen2_tk
     
     img2 = Image.open("output/output.jpg")
-    img2 = img2.resize((400, 400), Image.LANCZOS)
+    img2 = img2.resize((500, 500), Image.LANCZOS)
     photo2 = ImageTk.PhotoImage(img2)
     imagen2_tk = photo2
     label2.config(image=imagen2_tk)
@@ -632,7 +666,8 @@ def my_function(image_path, calibrar):
     texto3.configure(text="Rojo: "+str(NumeroLegosRojos)+"/"+str(len(centroide_rojos_Original)))
     texto4.configure(text="Lugar Incorrecto: "+str(NumeroLegosIncorrectos))
     if (NumeroLegosIncorrectos==0 and (NumeroLegosAmarillos+NumeroLegosAzules+NumeroLegosRojos)==(len(centroide_rojos_Original)+len(centroide_azules_Original)+len(centroide_Amarillos_Original))):
-        texto5.configure(text="Estado: Aprobado")
+        texto5.configure(text="Estado: Aprobado", foreground="green", font=("Trebuchet",12 ))
+
     else:
-        texto5.configure(text="Estado: No Aprobado")
+        texto5.configure(text="Estado: No Aprobado", foreground="red", font=("Trebuchet",12 ))
 root.mainloop()
