@@ -11,8 +11,114 @@ from tkinter import *
 from PIL import Image, ImageTk
 from tkinter import messagebox
 
-#Si no existe carpeta output la crea
+# Crea un tercer botón para guardar la dirección de la imagen actual y ejecutar una función
+def save_and_execute():
+    global current_image
+    image_path = os.path.join(image_folder, image_names[current_image])
+    with open("image_path.txt", "w") as f:
+        f.write(image_path)
+    my_function(image_path, False)
+    
 
+def calibrarPrograma():
+    global current_image
+    image_path = os.path.join(image_folder, image_names[current_image])
+    with open("image_path.txt", "w") as f:
+        f.write(image_path)
+    my_function(image_path, True)
+    global ProgramaCalibrado
+    ProgramaCalibrado=True
+
+# Función para cambiar la imagen actual y mostrarla en el widget de lienzo
+def change_image(direction):
+    global current_image
+    current_image += direction
+
+    # Verifica si la imagen actual está fuera de los límites de la lista de imágenes
+    if current_image < 0:
+        current_image = len(image_list) - 1
+    elif current_image >= len(image_list):
+        current_image = 0
+
+    # Muestra la nueva imagen en el widget de lienzo
+    imagen1_tk = image_list[current_image]
+    label1.config(image=imagen1_tk)
+
+
+# Función para ejecutar en la imagen actual
+def my_function(image_path, calibrar):
+    # Ejecuta alguna función en la imagen actual
+    if(calibrar==True):
+        Proceso(image_path,True)
+        global CalibracionLista
+        CalibracionLista=True
+    elif(calibrar==False and ProgramaCalibrado==True):
+        Proceso(image_path, False)
+    else:
+        messagebox.showerror("Error", "Primero tiene que calibrar el programa.")
+        return
+        
+    # Cambia la imagen de salida
+    global imagen2_tk
+    
+    img2 = Image.open("output/output.jpg")
+    img2 = img2.resize((450, 450), Image.LANCZOS)
+    photo2 = ImageTk.PhotoImage(img2)
+    imagen2_tk = photo2
+    label2.config(image=imagen2_tk)
+    
+    texto1.configure(text="Amarillo: "+str(NumeroLegosAmarillos) +"/"+str(len(centroide_Amarillos_Original)))
+    texto2.configure(text="Azul: "+str(NumeroLegosAzules)+"/"+str(len(centroide_azules_Original)))
+    texto3.configure(text="Rojo: "+str(NumeroLegosRojos)+"/"+str(len(centroide_rojos_Original)))
+    texto4.configure(text="Lugar Incorrecto: "+str(NumeroLegosIncorrectos))
+    if (NumeroLegosIncorrectos==0 and (NumeroLegosAmarillos+NumeroLegosAzules+NumeroLegosRojos)==(len(centroide_rojos_Original)+len(centroide_azules_Original)+len(centroide_Amarillos_Original))):
+        texto5.configure(text="Estado: Aprobado", foreground="green", font=("Trebuchet",12 ))
+
+    else:
+        texto5.configure(text="Estado: No Aprobado", foreground="red", font=("Trebuchet",12 ))
+n_image= 0
+def capture_image():
+    global image_path
+    global image_names
+    global image_folder
+    global image_list
+    global label1
+    global n_image
+
+    # Inicializar la cámara
+    cap = cv2.VideoCapture(0)
+    global frame
+    while True:
+        # Leer el cuadro actual de la cámara
+        ret, frame = cap.read()
+
+        # Mostrar el cuadro en una ventana llamada "Captura de imagen"
+        cv2.imshow('Captura de imagen', frame)
+
+        # Esperar a que el usuario presione la tecla 'Enter'
+        if cv2.waitKey(1) == 13:
+            break
+
+    # Guardar la imagen capturada en un archivo llamado "imagen_capturada.jpg"
+    cv2.imwrite('images/imagen_capturada{}.jpg'.format(n_image), frame)
+
+    # Liberar la cámara y cerrar la ventana
+    cap.release()
+    cv2.destroyAllWindows()
+    image_path = os.path.join(image_folder, 'imagen_capturada{}.jpg'.format(n_image))
+    n_image +=1
+    img = Image.open(image_path)
+    frame = img.resize((200, 200), Image.ANTIALIAS)
+    photo = ImageTk.PhotoImage(frame)
+    image_list.append(photo)
+    image_names.append('imagen_capturada{}.jpg'.format(n_image))
+
+    print(len(image_list))
+    messagebox.showinfo("Photo Taken", "Photo saved successfully!")
+# Llamar a la función para capturar la imagen
+# capture_image()
+
+#Si no existe carpeta output la crea
 if not os.path.exists('output'):
     os.makedirs('output')
 
@@ -80,9 +186,9 @@ def Proceso(img_ubicacion, calibrar):
           
 
     #Lego centro de la imagen
-    Punto_centro_imagen = img_re.shape[1] // 2, img_re.shape[0] // 2
+    Lego_centro_imagen = img_re.shape[1] // 2, img_re.shape[0] // 2
     # Coordenada de los centroides de los dos Legos
-    x0, y0 = Punto_centro_imagen
+    x0, y0 = Lego_centro_imagen
     x1, y1 = Lego_centro
     # Calcular la diferencia de coordenadas
     tx = x0 - x1
@@ -106,7 +212,7 @@ def Proceso(img_ubicacion, calibrar):
     mask = cv2.inRange(hsv_image, lower_black, upper_black)
     segmented_image = cv2.bitwise_and(image_translated, image_translated, mask=mask)
     
-    kernel = np.ones((8, 8), np.uint8)
+    kernel = np.ones((10, 10), np.uint8)
     segmented_image = cv2.dilate(mask, kernel, iterations=1)
 
 
@@ -184,7 +290,7 @@ def Proceso(img_ubicacion, calibrar):
     #Lego esperado es donde deberia estar el Lego mas cercano a los otros (esto se calibra manualmente)
     Lego_esperado= (136,347)
     # Coordenadas del Lego de referencia (Centro de la imagen)
-    x1, y1 = Punto_centro_imagen
+    x1, y1 = Lego_centro_imagen
     # Coordenadas del primer Lego (Lego_cercano)
     x2, y2 = Lego_cercano
     # Coordenadas del segundo Lego (Lego_esperado)
@@ -205,7 +311,7 @@ def Proceso(img_ubicacion, calibrar):
     #imprimir el ángulo de rotación
     print("El ángulo de rotación es: {}".format(delta_theta_deg))
     # Obtener la matriz de transformación de rotación
-    rotation_matrix = cv2.getRotationMatrix2D(Punto_centro_imagen, delta_theta_deg, 1.0)
+    rotation_matrix = cv2.getRotationMatrix2D(Lego_centro_imagen, delta_theta_deg, 1.0)
     # Aplicar la matriz de transformación a la imagen
     rotated_image = cv2.warpAffine(image_translated.copy(), rotation_matrix, (image_translated.copy().shape[1], image_translated.copy().shape[0]))
     cv2.imshow('Imagen rotada', rotated_image)
@@ -297,6 +403,8 @@ def Proceso(img_ubicacion, calibrar):
     upper_blue= np.array([130, 255, 255])  # Valor máximo de H, S y V para azul
     # Crear una máscara que filtre los píxeles dentro del rango de colores definido
     mask = cv2.inRange(hsv_image, lower_blue, upper_blue)
+    # Aplicar la máscara a la imagen original para obtener la imagen segmentada
+    segmented_image = cv2.bitwise_and(rotated_image, rotated_image, mask=mask)
     # Crear una máscara que filtre los píxeles dentro del rango de colores definido
     mask = cv2.inRange(hsv_image, lower_blue, upper_blue)
     # Aplicar filtro de dilatación a la máscara
@@ -352,6 +460,8 @@ def Proceso(img_ubicacion, calibrar):
     upper_green = np.array([25, 255, 255])  # Valor máximo de H, S y V para Amarillo
     # Crear una máscara que filtre los píxeles dentro del rango de colores definido
     mask = cv2.inRange(hsv_image, lower_green, upper_green)
+    # Aplicar la máscara a la imagen original para obtener la imagen segmentada
+    segmented_image = cv2.bitwise_and(rotated_image, rotated_image, mask=mask)
     # Crear una máscara que filtre los píxeles dentro del rango de colores definido
     mask = cv2.inRange(hsv_image, lower_green, upper_green)
     # Aplicar filtro de dilatación a la máscara
@@ -405,9 +515,8 @@ def Proceso(img_ubicacion, calibrar):
     NumeroLegosIncorrectos+=cantidad_Legos
     
     #La tolerancia es la distancia máxima que se permite entre dos Legos para considerarlos iguales, Esto se necesita porque la rotacion puede darnos 1 o 2 pixeles de diferencia en coordenadas en diferentes casos
-    
+    tolerancia=10
     def comparar_coordenadas(coord1, coord2):
-        tolerancia=10
         print(coord1, coord2)
         dif_x = abs(coord1[0] - coord2[0])
         dif_y = abs(coord1[1] - coord2[1])
@@ -420,7 +529,6 @@ def Proceso(img_ubicacion, calibrar):
         
     #Comparar largo y alto
     def comparar_LyA(LyA1, LyA2):
-        tolerancia=10
         print(LyA1, LyA2)
         dif_L = abs(LyA1[0] - LyA2[0])
         dif_A = abs(LyA1[1] - LyA2[1])
@@ -510,17 +618,21 @@ def Proceso(img_ubicacion, calibrar):
     cv2.destroyAllWindows()
 
 ProgramaCalibrado=False
+
+##########################################################################
+# Interfaz 
 # Crea una ventana principal
 root = Tk()
-root.maxsize(750, 700) 
-root.configure(background="#7cbc9a")
+#  Guardamos el largo y alto de la ventana
+wventana = 720
+hventana = 700
+root.maxsize(wventana, hventana ) 
 root.title("Mostrar imágenes")
+root.configure(background="#7cbc9a")
+
 #  Obtenemos el largo y  ancho de la pantalla
 wtotal = root.winfo_screenwidth()
 htotal = root.winfo_screenheight()
-#  Guardamos el largo y alto de la ventana
-wventana = 750
-hventana = 700
 
 #  Aplicamos la siguiente formula para calcular donde debería posicionarse
 pwidth = round(wtotal/2-wventana/2)
@@ -528,17 +640,22 @@ pheight = round(htotal/2-hventana/2)
 
 #  Se lo aplicamos a la geometría de la ventana
 root.geometry(str(wventana)+"x"+str(hventana)+"+"+str(pwidth)+"+"+str(pheight))
+
+#creamos frame para mostrar titulo
 title_frame = Frame(root)
 title_frame.grid(row=0, column=0,columnspan=2, padx=10, pady=5)
+
 #añadimos titulo
 label = Label(title_frame, text="Inspector De Posicionamiento De Componentes")
 label.pack()
 label.config(fg="#fff",font=("Impact",24),background="#7cbc9a")
+
 #Crea un widget de lienzo
-canvas = Canvas(root, width=500, height=500)
+canvas = Canvas(root)
 canvas.grid(row=1, column=1, padx=10, pady=5)
 
-left_frame = Frame(root,width=800, height=300)
+left_frame = Frame(root)
+left_frame.config(width="400", height="200", bd=10,relief="sunken")
 left_frame.grid(row=1, column=0, padx=10, pady=5)
 
 # Accede a la carpeta de imágenes y guarda los nombres de los archivos en una lista
@@ -549,6 +666,8 @@ image_names = os.listdir(image_folder)
 current_image = 0
 image_list = []
 
+print(image_names)
+print(len(image_list))
 # Carga todas las imágenes en la lista de imágenes
 for image_name in image_names:
     image_path = os.path.join(image_folder, image_name)
@@ -556,6 +675,19 @@ for image_name in image_names:
     img = img.resize((200, 200), Image.ANTIALIAS)
     photo = ImageTk.PhotoImage(img)
     image_list.append(photo)
+# Muestra la primera imagen en el widget de lienzo
+label1 = Label(left_frame)
+label1.pack()
+imagen1_tk = image_list[current_image]
+label1.config(image=imagen1_tk)
+
+#muestra la segunda imagen el widget de lienzo
+label2 = Label(canvas)
+img = Image.open("images/"+image_names[0])
+img = img.resize((450, 450), Image.ANTIALIAS)
+photo = ImageTk.PhotoImage(img)
+label2.config(image=photo)
+label2.pack()
 
 
 texto1 = Label(left_frame,text="Amarillo: 0/0 ", font=("Trebuchet",12 ))
@@ -569,99 +701,31 @@ texto4.pack()
 texto5 = Label(left_frame,text="Estado: No calibrado ", font=("Trebuchet",12))
 texto5.pack()
 
-# Crea dos botones para navegar por las imágenes
-ratio = 1/8
+ratio = 1/10
+
+# Boton para navegar entre las imagenes
 previous_image = PhotoImage(file = r"layout\previous.png")
 previous_button = Button(root, text="   Anterior", image = previous_image, compound = LEFT, background="#ed6d4a", foreground="#fff",command=lambda: change_image(-1))
 previous_button.place(relx =ratio, rely = 0.85, width=100,anchor='c')
-# Creating a photoimage object to use image
-next_image = PhotoImage(file = r"layout\next.png")
-next_button = Button(root, text="Siguiente   ", image = next_image, compound = RIGHT, background="#3fd97f", foreground="#fff",command=lambda: change_image(1))
-next_button.place(relx =ratio*7, rely = 0.85, width=100,anchor='c')
 
-# Muestra la primera imagen en el widget de lienzo
-label1 = Label(left_frame)
-label1.pack(side='left')
-imagen1_tk = image_list[current_image]
-label1.config(image=imagen1_tk)
-#muestra la segunda imagen el widget de lienzo
-label2 = Label(canvas)
-img = Image.open("images/"+image_names[0])
-img = img.resize((500, 500), Image.ANTIALIAS)
-photo = ImageTk.PhotoImage(img)
-label2.config(image=photo)
-label2.pack()
-
-# Crea un tercer botón para guardar la dirección de la imagen actual y ejecutar una función
-def save_and_execute():
-    global current_image
-    image_path = os.path.join(image_folder, image_names[current_image])
-    with open("image_path.txt", "w") as f:
-        f.write(image_path)
-    my_function(image_path, False)
-    
-
-def calibrarPrograma():
-    global current_image
-    image_path = os.path.join(image_folder, image_names[current_image])
-    with open("image_path.txt", "w") as f:
-        f.write(image_path)
-    my_function(image_path, True)
-    global ProgramaCalibrado
-    ProgramaCalibrado=True
-    
-execute_image = PhotoImage(file = r"layout\execute.png")
-save_button = Button(root, text="Ejecutar   ", image =execute_image, compound = RIGHT, background="#23998e", foreground="#fff", command=save_and_execute)
-save_button.place(relx =ratio*5, rely = 0.9, width=100, height=40,anchor='c')
+# boton para calibrar programa
 calibrate_image = PhotoImage(file = r"layout\calibrate.png")
 calibrar_button = Button(root, text="Calibrar   ", image =calibrate_image, compound = RIGHT, background="#c46564", foreground="#fff",command=calibrarPrograma)
 calibrar_button.place(relx =ratio*3, rely = 0.9, width=100, height=40,anchor='c')
 
-# Función para cambiar la imagen actual y mostrarla en el widget de lienzo
-def change_image(direction):
-    global current_image
-    current_image += direction
+# Boton para ejecutar
+execute_image = PhotoImage(file = r"layout\execute.png")
+save_button = Button(root, text="Ejecutar   ", image =execute_image, compound = RIGHT, background="#23998e", foreground="#fff", command=save_and_execute)
+save_button.place(relx =ratio*5, rely = 0.9, width=100, height=40,anchor='c')
 
-    # Verifica si la imagen actual está fuera de los límites de la lista de imágenes
-    if current_image < 0:
-        current_image = len(image_list) - 1
-    elif current_image >= len(image_list):
-        current_image = 0
+# Boton para agregar foto
+add_image = PhotoImage(file = r"layout\add-picture.png")
+add_button = Button(root, text="Agregar   ", image =add_image, compound = RIGHT, background="#09738a", foreground="#fff", command=capture_image)
+add_button.place(relx =ratio*7, rely = 0.9, width=100, height=40,anchor='c')
 
-    # Muestra la nueva imagen en el widget de lienzo
-    imagen1_tk = image_list[current_image]
-    label1.config(image=imagen1_tk)
+# Boton para navegar entre las imagenes
+next_image = PhotoImage(file = r"layout\next.png")
+next_button = Button(root, text="Siguiente   ", image = next_image, compound = RIGHT, background="#3fd97f", foreground="#fff",command=lambda: change_image(1))
+next_button.place(relx =ratio*9, rely = 0.85, width=100,anchor='c')
 
-
-# Función para ejecutar en la imagen actual
-def my_function(image_path, calibrar):
-    # Ejecuta alguna función en la imagen actual
-    if(calibrar==True):
-        Proceso(image_path,True)
-        global CalibracionLista
-        CalibracionLista=True
-    elif(calibrar==False and ProgramaCalibrado==True):
-        Proceso(image_path, False)
-    else:
-        messagebox.showerror("Error", "Primero tiene que calibrar el programa.")
-        return
-        
-    # Cambia la imagen de salida
-    global imagen2_tk
-    
-    img2 = Image.open("output/output.jpg")
-    img2 = img2.resize((500, 500), Image.LANCZOS)
-    photo2 = ImageTk.PhotoImage(img2)
-    imagen2_tk = photo2
-    label2.config(image=imagen2_tk)
-    
-    texto1.configure(text="Amarillo: "+str(NumeroLegosAmarillos) +"/"+str(len(centroide_Amarillos_Original)))
-    texto2.configure(text="Azul: "+str(NumeroLegosAzules)+"/"+str(len(centroide_azules_Original)))
-    texto3.configure(text="Rojo: "+str(NumeroLegosRojos)+"/"+str(len(centroide_rojos_Original)))
-    texto4.configure(text="Lugar Incorrecto: "+str(NumeroLegosIncorrectos))
-    if (NumeroLegosIncorrectos==0 and (NumeroLegosAmarillos+NumeroLegosAzules+NumeroLegosRojos)==(len(centroide_rojos_Original)+len(centroide_azules_Original)+len(centroide_Amarillos_Original))):
-        texto5.configure(text="Estado: Aprobado", foreground="green", font=("Trebuchet",12 ))
-
-    else:
-        texto5.configure(text="Estado: No Aprobado", foreground="red", font=("Trebuchet",12 ))
 root.mainloop()
