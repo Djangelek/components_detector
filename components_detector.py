@@ -80,9 +80,9 @@ def Proceso(img_ubicacion, calibrar):
           
 
     #Lego centro de la imagen
-    Lego_centro_imagen = img_re.shape[1] // 2, img_re.shape[0] // 2
+    Punto_centro_imagen = img_re.shape[1] // 2, img_re.shape[0] // 2
     # Coordenada de los centroides de los dos Legos
-    x0, y0 = Lego_centro_imagen
+    x0, y0 = Punto_centro_imagen
     x1, y1 = Lego_centro
     # Calcular la diferencia de coordenadas
     tx = x0 - x1
@@ -106,7 +106,7 @@ def Proceso(img_ubicacion, calibrar):
     mask = cv2.inRange(hsv_image, lower_black, upper_black)
     segmented_image = cv2.bitwise_and(image_translated, image_translated, mask=mask)
     
-    kernel = np.ones((10, 10), np.uint8)
+    kernel = np.ones((8, 8), np.uint8)
     segmented_image = cv2.dilate(mask, kernel, iterations=1)
 
 
@@ -184,7 +184,7 @@ def Proceso(img_ubicacion, calibrar):
     #Lego esperado es donde deberia estar el Lego mas cercano a los otros (esto se calibra manualmente)
     Lego_esperado= (136,347)
     # Coordenadas del Lego de referencia (Centro de la imagen)
-    x1, y1 = Lego_centro_imagen
+    x1, y1 = Punto_centro_imagen
     # Coordenadas del primer Lego (Lego_cercano)
     x2, y2 = Lego_cercano
     # Coordenadas del segundo Lego (Lego_esperado)
@@ -205,7 +205,7 @@ def Proceso(img_ubicacion, calibrar):
     #imprimir el ángulo de rotación
     print("El ángulo de rotación es: {}".format(delta_theta_deg))
     # Obtener la matriz de transformación de rotación
-    rotation_matrix = cv2.getRotationMatrix2D(Lego_centro_imagen, delta_theta_deg, 1.0)
+    rotation_matrix = cv2.getRotationMatrix2D(Punto_centro_imagen, delta_theta_deg, 1.0)
     # Aplicar la matriz de transformación a la imagen
     rotated_image = cv2.warpAffine(image_translated.copy(), rotation_matrix, (image_translated.copy().shape[1], image_translated.copy().shape[0]))
     cv2.imshow('Imagen rotada', rotated_image)
@@ -297,8 +297,6 @@ def Proceso(img_ubicacion, calibrar):
     upper_blue= np.array([130, 255, 255])  # Valor máximo de H, S y V para azul
     # Crear una máscara que filtre los píxeles dentro del rango de colores definido
     mask = cv2.inRange(hsv_image, lower_blue, upper_blue)
-    # Aplicar la máscara a la imagen original para obtener la imagen segmentada
-    segmented_image = cv2.bitwise_and(rotated_image, rotated_image, mask=mask)
     # Crear una máscara que filtre los píxeles dentro del rango de colores definido
     mask = cv2.inRange(hsv_image, lower_blue, upper_blue)
     # Aplicar filtro de dilatación a la máscara
@@ -354,8 +352,6 @@ def Proceso(img_ubicacion, calibrar):
     upper_green = np.array([25, 255, 255])  # Valor máximo de H, S y V para Amarillo
     # Crear una máscara que filtre los píxeles dentro del rango de colores definido
     mask = cv2.inRange(hsv_image, lower_green, upper_green)
-    # Aplicar la máscara a la imagen original para obtener la imagen segmentada
-    segmented_image = cv2.bitwise_and(rotated_image, rotated_image, mask=mask)
     # Crear una máscara que filtre los píxeles dentro del rango de colores definido
     mask = cv2.inRange(hsv_image, lower_green, upper_green)
     # Aplicar filtro de dilatación a la máscara
@@ -409,8 +405,9 @@ def Proceso(img_ubicacion, calibrar):
     NumeroLegosIncorrectos+=cantidad_Legos
     
     #La tolerancia es la distancia máxima que se permite entre dos Legos para considerarlos iguales, Esto se necesita porque la rotacion puede darnos 1 o 2 pixeles de diferencia en coordenadas en diferentes casos
-    tolerancia=10
+    
     def comparar_coordenadas(coord1, coord2):
+        tolerancia=10
         print(coord1, coord2)
         dif_x = abs(coord1[0] - coord2[0])
         dif_y = abs(coord1[1] - coord2[1])
@@ -423,13 +420,14 @@ def Proceso(img_ubicacion, calibrar):
         
     #Comparar largo y alto
     def comparar_LyA(LyA1, LyA2):
+        tolerancia=10
         print(LyA1, LyA2)
         dif_L = abs(LyA1[0] - LyA2[0])
         dif_A = abs(LyA1[1] - LyA2[1])
         if dif_L <= 5 and dif_A <= 5:
             print("True")
             return True
-        if dif_L <= tolerancia and dif_A <= tolerancia:
+        elif dif_L <= tolerancia and dif_A <= tolerancia:
             #comprar si los dos tinen el mismo lado de mayor longitud
             if LyA1[0]>LyA1[1]:
                 if LyA2[0]>LyA2[1]:
