@@ -112,7 +112,6 @@ def capture_image():
     cap.release()
     cv2.destroyAllWindows()
     image_path = os.path.join(image_folder, 'imagen_capturada{}.jpg'.format(n_image))
-    n_image +=1
     img = Image.open(image_path)
     frame = img.resize((200, 200), Image.ANTIALIAS)
     photo = ImageTk.PhotoImage(frame)
@@ -120,6 +119,7 @@ def capture_image():
     image_names.append('imagen_capturada{}.jpg'.format(n_image))
     change_image2()
     print(len(image_list))
+    n_image +=1
     messagebox.showinfo("Photo Taken", "Photo saved successfully!")
 # Llamar a la función para capturar la imagen
 # capture_image()
