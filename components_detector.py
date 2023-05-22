@@ -409,7 +409,7 @@ def Proceso(img_ubicacion, calibrar):
     NumeroLegosIncorrectos+=cantidad_Legos
     
     #La tolerancia es la distancia máxima que se permite entre dos Legos para considerarlos iguales, Esto se necesita porque la rotacion puede darnos 1 o 2 pixeles de diferencia en coordenadas en diferentes casos
-    tolerancia=15
+    tolerancia=10
     def comparar_coordenadas(coord1, coord2):
         print(coord1, coord2)
         dif_x = abs(coord1[0] - coord2[0])
@@ -426,7 +426,10 @@ def Proceso(img_ubicacion, calibrar):
         print(LyA1, LyA2)
         dif_L = abs(LyA1[0] - LyA2[0])
         dif_A = abs(LyA1[1] - LyA2[1])
-        if dif_L <= tolerancia and dif_A <= tolerancia:
+        if dif_L <= 5 and dif_A <= 5:
+            print("True")
+            return True
+        elif dif_L <= tolerancia and dif_A <= tolerancia:
             #comprar si los dos tinen el mismo lado de mayor longitud
             if LyA1[0]>LyA1[1]:
                 if LyA2[0]>LyA2[1]:
