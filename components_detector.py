@@ -43,6 +43,12 @@ def change_image(direction):
     # Muestra la nueva imagen en el widget de lienzo
     imagen1_tk = image_list[current_image]
     label1.config(image=imagen1_tk)
+    
+def change_image2():
+    global current_image
+    current_image=(len(image_list)-1)
+    imagen1_tk = image_list[current_image]
+    label1.config(image=imagen1_tk)
 
 
 # Función para ejecutar en la imagen actual
@@ -112,7 +118,7 @@ def capture_image():
     photo = ImageTk.PhotoImage(frame)
     image_list.append(photo)
     image_names.append('imagen_capturada{}.jpg'.format(n_image))
-
+    change_image2()
     print(len(image_list))
     messagebox.showinfo("Photo Taken", "Photo saved successfully!")
 # Llamar a la función para capturar la imagen
