@@ -586,17 +586,13 @@ label1 = Label(left_frame)
 label1.pack(side='left')
 imagen1_tk = image_list[current_image]
 label1.config(image=imagen1_tk)
-
+#muestra la segunda imagen el widget de lienzo
 label2 = Label(canvas)
 img = Image.open("images/"+image_names[0])
 img = img.resize((500, 500), Image.ANTIALIAS)
 photo = ImageTk.PhotoImage(img)
 label2.config(image=photo)
 label2.pack()
-# label2 = Label(canvas)
-# label2.pack(side='right')
-# imagen2_tk = image_list[current_image]
-# label2.config(image=imagen2_tk)
 
 # Crea un tercer botón para guardar la dirección de la imagen actual y ejecutar una función
 def save_and_execute():
