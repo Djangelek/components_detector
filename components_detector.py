@@ -10,6 +10,7 @@ import os
 from tkinter import *
 from PIL import Image, ImageTk
 from tkinter import messagebox
+import atexit
 
 # Crea un tercer botón para guardar la dirección de la imagen actual y ejecutar una función
 def save_and_execute():
@@ -82,7 +83,9 @@ def my_function(image_path, calibrar):
 
     else:
         texto5.configure(text="Estado: No Aprobado", foreground="red", font=("Trebuchet",12 ))
+
 n_image= 0
+
 def capture_image():
     global image_path
     global image_names
@@ -118,11 +121,25 @@ def capture_image():
     image_list.append(photo)
     image_names.append('imagen_capturada{}.jpg'.format(n_image))
     change_image2()
-    print(len(image_list))
     n_image +=1
     messagebox.showinfo("Photo Taken", "Photo saved successfully!")
-# Llamar a la función para capturar la imagen
-# capture_image()
+
+def eliminar_imagen(num_image):
+    nombre_imagen = "images/imagen_capturada{}.jpg".format(num_image)  # Reemplaza con el nombre de tu imagen
+    
+    if os.path.exists(nombre_imagen):
+        os.remove(nombre_imagen)
+        print(f"Imagen '{nombre_imagen}' eliminada.")
+    else:
+        print(f"La imagen '{nombre_imagen}' no existe.")
+
+def eliminar_imagenes_agregadas():
+    global n_image
+    for i in range(n_image):
+        eliminar_imagen(i)
+
+# Registrar la función para que se ejecute al finalizar el programa
+atexit.register(eliminar_imagenes_agregadas)
 
 #Si no existe carpeta output la crea
 if not os.path.exists('output'):
