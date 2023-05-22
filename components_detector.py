@@ -429,7 +429,7 @@ def Proceso(img_ubicacion, calibrar):
         if dif_L <= 5 and dif_A <= 5:
             print("True")
             return True
-        elif dif_L <= tolerancia and dif_A <= tolerancia:
+        if dif_L <= tolerancia and dif_A <= tolerancia:
             #comprar si los dos tinen el mismo lado de mayor longitud
             if LyA1[0]>LyA1[1]:
                 if LyA2[0]>LyA2[1]:
