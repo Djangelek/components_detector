@@ -226,9 +226,42 @@ def Proceso(img_ubicacion, calibrar):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
     
+    img_gray = cv2.cvtColor(image_translated, cv2.COLOR_BGR2GRAY)
+    #hacemos un threshold
+    (T, threshImg) = cv2.threshold(img_gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+    cv2.imshow(" ",threshImg)
+    cv2.waitKey(0) 
+    cv2.destroyAllWindows()
+    
+    #Aplicamos componentes conectados
+    conn = 4
+    output = cv2.connectedComponentsWithStats(threshImg, conn, cv2.CV_32S)
+    (numLabels, labels, stats, centroids) = output
+    for i in range(0, 2):
+    # extract the connected component statistics and centroid for
+    # the current label
+      x = stats[i, cv2.CC_STAT_LEFT]
+      y = stats[i, cv2.CC_STAT_TOP]
+      w = stats[i, cv2.CC_STAT_WIDTH]
+      h = stats[i, cv2.CC_STAT_HEIGHT]
+      area = stats[i, cv2.CC_STAT_AREA]
+      (cX, cY) = centroids[i]
+      print("Label No {}".format(i))
+      # Imprimir las medidas, área, centroide del objeto
+      print("Label No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, w, h, area, int(cX), int(cY)))
+      output = image_translated.copy()
+      cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 0), 3)
+      cv2.circle(output, (int(cX), int(cY)), 4, (0, 0, 255), -1)
+      cv2.imshow(" ",output)
+      cv2.waitKey(0) 
+      cv2.destroyAllWindows()
+      
+      #Detectamos el Lego centro de la pieza
+      if(i==1):
+          Lego_esperado = (int(x), int(y + h))
+          
     hsv_image = cv2.cvtColor(image_translated, cv2.COLOR_BGR2HSV)
     # Aplicar umbral para obtener los Legos negros
-
     lower_black = np.array([0, 0, 0])  # Valor mínimo de H, S y V para negro
     upper_black = np.array([179, 255, 30])  # Valor máximo de H, S y V para negro
 
@@ -274,9 +307,9 @@ def Proceso(img_ubicacion, calibrar):
         (cX, cY) = centroids[i]
         # ensure the width, height, and area are all neither too small
         # nor too big
-        keepWidth = w > 8 and w < 30
-        keepHeight = h > 8 and h < 30
-        keepArea = area > 80 and area < 700
+        keepWidth = w > 8 and w < 50
+        keepHeight = h > 8 and h < 50
+        keepArea = area > 80 and area < 1000
         # ensure the connected component we are examining passes all
         # three tests
         if all((keepWidth, keepHeight, keepArea)):
@@ -311,7 +344,7 @@ def Proceso(img_ubicacion, calibrar):
             Lego_cercano = centroides[i]
     print("El Lego más cercano a los otros dos en términos de distancia en ambos ejes es: {}".format(Lego_cercano))
     #Lego esperado es donde deberia estar el Lego mas cercano a los otros (esto se calibra manualmente)
-    Lego_esperado= (136,347)
+    #Lego_esperado= (136,347)
     # Coordenadas del Lego de referencia (Centro de la imagen)
     x1, y1 = Lego_centro_imagen
     # Coordenadas del primer Lego (Lego_cercano)
