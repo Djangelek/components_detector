@@ -206,7 +206,7 @@ def Proceso(img_ubicacion, calibrar):
       #Detectamos el Lego centro de la pieza
       if(i==1):
           Lego_centro = (int(cX), int(cY))
-          
+          Lego_esperado = (int(x), int(y + h))
 
     #Lego centro de la imagen
     Lego_centro_imagen = img_re.shape[1] // 2, img_re.shape[0] // 2
@@ -216,6 +216,7 @@ def Proceso(img_ubicacion, calibrar):
     # Calcular la diferencia de coordenadas
     tx = x0 - x1
     ty = y0 - y1
+    Lego_esperado=(Lego_esperado[0]+tx,Lego_esperado[1]+ty)
     # Crear la matriz de traslación
     translation_matrix = np.float32([[1, 0, tx], [0, 1, ty]])
     # Aplicar la traslación a la imagen
@@ -225,40 +226,6 @@ def Proceso(img_ubicacion, calibrar):
     cv2.imshow(" ",image_translated)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
-    
-    img_gray = cv2.cvtColor(image_translated, cv2.COLOR_BGR2GRAY)
-    #hacemos un threshold
-    (T, threshImg) = cv2.threshold(img_gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
-    cv2.imshow(" ",threshImg)
-    cv2.waitKey(0) 
-    cv2.destroyAllWindows()
-    
-    #Aplicamos componentes conectados
-    conn = 4
-    output = cv2.connectedComponentsWithStats(threshImg, conn, cv2.CV_32S)
-    (numLabels, labels, stats, centroids) = output
-    for i in range(0, 2):
-    # extract the connected component statistics and centroid for
-    # the current label
-      x = stats[i, cv2.CC_STAT_LEFT]
-      y = stats[i, cv2.CC_STAT_TOP]
-      w = stats[i, cv2.CC_STAT_WIDTH]
-      h = stats[i, cv2.CC_STAT_HEIGHT]
-      area = stats[i, cv2.CC_STAT_AREA]
-      (cX, cY) = centroids[i]
-      print("Label No {}".format(i))
-      # Imprimir las medidas, área, centroide del objeto
-      print("Label No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, w, h, area, int(cX), int(cY)))
-      output = image_translated.copy()
-      cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 0), 3)
-      cv2.circle(output, (int(cX), int(cY)), 4, (0, 0, 255), -1)
-      cv2.imshow(" ",output)
-      cv2.waitKey(0) 
-      cv2.destroyAllWindows()
-      
-      #Detectamos el Lego centro de la pieza
-      if(i==1):
-          Lego_esperado = (int(x), int(y + h))
           
     hsv_image = cv2.cvtColor(image_translated, cv2.COLOR_BGR2HSV)
     # Aplicar umbral para obtener los Legos negros
@@ -571,7 +538,7 @@ def Proceso(img_ubicacion, calibrar):
     NumeroLegosIncorrectos+=cantidad_Legos
     
     #La tolerancia es la distancia máxima que se permite entre dos Legos para considerarlos iguales, Esto se necesita porque la rotacion puede darnos 1 o 2 pixeles de diferencia en coordenadas en diferentes casos
-    tolerancia=10
+    tolerancia=15
     def comparar_coordenadas(coord1, coord2):
         print(coord1, coord2)
         dif_x = abs(coord1[0] - coord2[0])
@@ -588,7 +555,7 @@ def Proceso(img_ubicacion, calibrar):
         print(LyA1, LyA2)
         dif_L = abs(LyA1[0] - LyA2[0])
         dif_A = abs(LyA1[1] - LyA2[1])
-        if dif_L <= 5 and dif_A <= 5:
+        if dif_L <= 8 and dif_A <= 8:
             print("True")
             return True
         elif dif_L <= tolerancia and dif_A <= tolerancia:
