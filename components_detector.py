@@ -230,17 +230,16 @@ def Proceso(img_ubicacion, calibrar):
     hsv_image = cv2.cvtColor(image_translated, cv2.COLOR_BGR2HSV)
     # Aplicar umbral para obtener los Legos negros
     lower_black = np.array([0, 0, 0])  # Valor mínimo de H, S y V para negro
-    upper_black = np.array([179, 255, 30])  # Valor máximo de H, S y V para negro
+    upper_black = np.array([180, 255, 30])  # Valor máximo de H, S y V para negro
 
     mask = cv2.inRange(hsv_image, lower_black, upper_black)
     segmented_image = cv2.bitwise_and(image_translated, image_translated, mask=mask)
     
     kernel = np.ones((10, 10), np.uint8)
     segmented_image = cv2.dilate(mask, kernel, iterations=1)
-
     cv2.imshow('Contornos', segmented_image)
     cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    cv2.destroyAllWindows()     
 
     #Aplicamos componentes conectados
     conn = 8
@@ -258,8 +257,8 @@ def Proceso(img_ubicacion, calibrar):
     # Imprimir las medidas, área y centroide del objeto
       print("Label No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, w, h, area, int(cX), int(cY)))
       #imptimti imagen
-      
-      
+    
+    
     #Centroides de los Legos de referencia
     centroides = []
     for i in range(0, numLabels):
@@ -292,6 +291,45 @@ def Proceso(img_ubicacion, calibrar):
             cv2.imshow(" ",output)
             cv2.waitKey(0)       
     #imprimir los centroides guardados en el diccionario
+    print(centroides.__len__())
+    if(centroides.__len__()>3):
+        kernel = np.ones((12, 12), np.uint8)
+        segmented_image = cv2.morphologyEx(segmented_image, cv2.MORPH_OPEN, kernel)
+        cv2.imshow('Contornos', segmented_image)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+        centroides = []
+        for i in range(0, numLabels):
+            # extract the connected component statistics and centroid for
+            # the current label
+            x = stats[i, cv2.CC_STAT_LEFT]
+            y = stats[i, cv2.CC_STAT_TOP]
+            w = stats[i, cv2.CC_STAT_WIDTH]
+            h = stats[i, cv2.CC_STAT_HEIGHT]
+            area = stats[i, cv2.CC_STAT_AREA]
+            (cX, cY) = centroids[i]
+            # ensure the width, height, and area are all neither too small
+            # nor too big
+            keepWidth = w > 15 and w < 60
+            keepHeight = h > 15                    and h < 60
+            keepArea = area > 150 and area < 1000
+            # ensure the connected component we are examining passes all
+            # three tests
+            if all((keepWidth, keepHeight, keepArea)):
+            # construct a mask for the current connected component and
+            # then take the bitwise OR with the mask
+                output = image_translated.copy()
+                cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 0), 3)
+                cv2.circle(output, (int(cX), int(cY)), 4, (0, 0, 255), -1)
+
+                print("Label No {}: Longitud: {}, Altura: {}, Área: {}, Centroide: ({}, {})".format(i, w, h, area, int(cX), int(cY)))
+                centroides.append((int(cX), int(cY)))
+            
+                #Visualizar la imagen
+                cv2.imshow(" ",output)
+                cv2.waitKey(0) 
+        
+    
     for centroid in centroides:
         cX, cY = centroid
         print("Coordenadas: cX = {}, cY = {}".format(cX, cY))
@@ -361,7 +399,7 @@ def Proceso(img_ubicacion, calibrar):
     # Convertir la imagen a espacio de color HSV
     hsv_image = cv2.cvtColor(rotated_image, cv2.COLOR_BGR2HSV)
     # Definir el rango de colores a detectar (en este caso, color rojo)
-    lower_red = np.array([0, 50, 50])  # Valor mínimo de H, S y V para rojo
+    lower_red = np.array([0, 55, 55])  # Valor mínimo de H, S y V para rojo
     upper_red = np.array([10, 255, 255])  # Valor máximo de H, S y V para rojo
     # Crear una máscara que filtre los píxeles dentro del rango de colores definido
     mask = cv2.inRange(hsv_image, lower_red, upper_red)
@@ -375,7 +413,7 @@ def Proceso(img_ubicacion, calibrar):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
     
-    kernel = np.ones((12, 12), np.uint8)
+    kernel = np.ones((5, 5), np.uint8)
     apertura = cv2.morphologyEx(dilated_mask, cv2.MORPH_OPEN, kernel)
     cv2.imshow('Imagen Segmentada Roja', apertura)
     cv2.waitKey(0)
@@ -537,7 +575,7 @@ def Proceso(img_ubicacion, calibrar):
     NumeroLegosIncorrectos+=cantidad_Legos
     
     #La tolerancia es la distancia máxima que se permite entre dos Legos para considerarlos iguales, Esto se necesita porque la rotacion puede darnos 1 o 2 pixeles de diferencia en coordenadas en diferentes casos
-    tolerancia=12
+    tolerancia=10
     def comparar_coordenadas(coord1, coord2):
         print(coord1, coord2)
         dif_x = abs(coord1[0] - coord2[0])
