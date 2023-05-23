@@ -238,7 +238,6 @@ def Proceso(img_ubicacion, calibrar):
     kernel = np.ones((10, 10), np.uint8)
     segmented_image = cv2.dilate(mask, kernel, iterations=1)
 
-
     cv2.imshow('Contornos', segmented_image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
@@ -274,9 +273,9 @@ def Proceso(img_ubicacion, calibrar):
         (cX, cY) = centroids[i]
         # ensure the width, height, and area are all neither too small
         # nor too big
-        keepWidth = w > 8 and w < 50
-        keepHeight = h > 8 and h < 50
-        keepArea = area > 80 and area < 1000
+        keepWidth = w > 10 and w < 60
+        keepHeight = h > 10 and h < 60
+        keepArea = area > 150 and area < 1000
         # ensure the connected component we are examining passes all
         # three tests
         if all((keepWidth, keepHeight, keepArea)):
@@ -376,7 +375,7 @@ def Proceso(img_ubicacion, calibrar):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
     
-    kernel = np.ones((10, 10), np.uint8)
+    kernel = np.ones((12, 12), np.uint8)
     apertura = cv2.morphologyEx(dilated_mask, cv2.MORPH_OPEN, kernel)
     cv2.imshow('Imagen Segmentada Roja', apertura)
     cv2.waitKey(0)
@@ -538,7 +537,7 @@ def Proceso(img_ubicacion, calibrar):
     NumeroLegosIncorrectos+=cantidad_Legos
     
     #La tolerancia es la distancia máxima que se permite entre dos Legos para considerarlos iguales, Esto se necesita porque la rotacion puede darnos 1 o 2 pixeles de diferencia en coordenadas en diferentes casos
-    tolerancia=15
+    tolerancia=12
     def comparar_coordenadas(coord1, coord2):
         print(coord1, coord2)
         dif_x = abs(coord1[0] - coord2[0])
